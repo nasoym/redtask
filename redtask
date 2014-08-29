@@ -102,9 +102,75 @@ function assert_json() {
   echo "$1" | jq -e '.' >/dev/null 2>&1 && echo "a"
 }
 
+function load_json_of_ids() {
+  IDS=$1
+  DEPTH=$2
+  if [ -n "$DEPTH" ];then
+    NEXT_DEPTH=$(( DEPTH - 1 ))
+  else
+    DEPTH=0
+  fi
+  ALL_TASKS_JSON="["
+  FIRST_ELEMENT=true
+  for ID in $IDS
+  do
+    TASK_JSON=$(issue $ID | jq -c '.[]')
+
+      if [ "$DEPTH" -gt 0 ];then
+        #echo ">>>>>>>>>>>>>>"
+        CHILD_IDS=$(echo "$TASK_JSON" | jq -r ".children[] | .id")
+        if [ -n "$CHILD_IDS" ];then
+          #echo ">>>>$CHILD_IDS"
+          CHILD_TASKS_JSON="$(load_json_of_ids "$CHILD_IDS" $NEXT_DEPTH)"
+          #echo "$CHILD_TASKS_JSON"
+          #echo "__________________________"
+          TASK_JSON=$(echo "$TASK_JSON" | jq -c ".children=$CHILD_TASKS_JSON")
+          #echo "__________________________"
+          #TASK_JSON
+          #ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c ".[] | select(.id == $ID) | .children=$CHILD_TASKS_JSON")
+          #TASK_JSON=$(echo "$TASK_JSON" | jq -c ".[] | select(.id == $ID) | .children=$CHILD_TASKS_JSON")
+        fi
+      fi
+
+    if [ "$FIRST_ELEMENT" = true ]; then
+      FIRST_ELEMENT=false
+    else
+      ALL_TASKS_JSON="${ALL_TASKS_JSON},"
+    fi
+    ALL_TASKS_JSON="${ALL_TASKS_JSON}${TASK_JSON}"
+  done
+  ALL_TASKS_JSON="${ALL_TASKS_JSON}]"
+  echo "$ALL_TASKS_JSON"
+}
+
 #TASK_JSON=$(issue $1)
 #echo "$TASK_JSON"
 #task_line_from_json "$TASK_JSON"
+
+if [ "$#" -ge 1 ]; then
+  if [ $(echo "$1" | grep "^[0-9]*\(,[0-9]*\)*$") ]; then
+    IDS=$(echo "$1" | tr ',' '\n')
+    shift
+    ALL_TASKS_JSON="$(load_json_of_ids "$IDS" 1)"
+    echo "$ALL_TASKS_JSON"
+    #echo
+
+    # add one level deep children
+#    for ID in $IDS
+#    do
+#      #echo "$ALL_TASKS_JSON" | jq -r ".[] | select(.id == $ID) | .subject"
+#      CHILD_IDS=$(echo "$ALL_TASKS_JSON" | jq -r ".[] | select(.id == $ID) | .children[] | .id")
+#      CHILD_TASKS_JSON="$(load_json_of_ids "$CHILD_IDS")"
+#      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c ".[] | select(.id == $ID) | .children=$CHILD_TASKS_JSON")
+#    done
+#
+#    echo "$ALL_TASKS_JSON"
+#
+  fi
+fi
+
+exit 0
+
 
 if [ "$#" -ge 1 ]; then
   if [ $(echo "$1" | grep "^[0-9]*\(,[0-9]*\)*$") ]; then
