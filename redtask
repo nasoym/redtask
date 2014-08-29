@@ -1,0 +1,166 @@
+#!/bin/bash
+
+SCRIPT_PATH=$(dirname $0)
+source $SCRIPT_PATH/_redmine_api_config_file
+
+: ${ISSUE_LIMIT:="400"}
+: ${USER_ID:="me"}
+
+PARSED_OPTIONS=""
+while getopts "p:s:elj" options; do
+  PARSED_OPTIONS="${PARSED_OPTIONS} -${options}${OPTARG}"
+  case $options in
+    p )
+        PROJECT_ID=$OPTARG
+        ;;
+    s )
+        SPACES=$OPTARG
+        ;;
+    e )
+        EXTENDED=1
+        ;;
+    l )
+        LINE=1
+        ;;
+    j )
+        JSON_PRETTY=1
+        ;;
+   \? ) 
+        exit 1
+        ;;
+  esac
+done
+shift $(( OPTIND - 1 ));
+
+if [ -z "$SERVER" ] || [ -z "$PROJECT_ID" ] || [ -z "$KEY" ]; then
+  echo "SERVER,PROJECT_ID or KEY variable are not defined." >&2
+  echo "  These variables should either be defined as environments variables," >&2
+  echo "  or in a .redmine file in the current directory or the users home directory." >&2
+  exit 1
+fi
+
+function issue() {
+  ISSUE_ID=$1
+  REDMINE_ISSUE=$(curl -s -3 "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}&include=journals,children")
+  REDMINE_SINGLE_ISSUE=$(echo $REDMINE_ISSUE | jq '.issue')
+  TASK_JSON=$(echo $REDMINE_SINGLE_ISSUE |\
+    jq -c "[if type == \"array\" then .[] else . end | {\
+      id: .id, \
+      subject: .subject,\
+      description: .description,\
+      story_points: .story_points,\
+      status_name: .status.name, \
+      status_id: .status.id, \
+      tracker_id: .tracker.id, \
+      tracker_name: .tracker.name, \
+      fixed_version_id: .fixed_version.id, \
+      fixed_version_name: .fixed_version.name, \
+      assigned_to_name: .assigned_to.name, \
+      assigned_to_id: .assigned_to.id, \
+      parent_id: .parent.id, \
+      estimated_hours: .estimated_hours, \
+      spent_hours: .spent_hours, \
+      remaining_hours: ( if has(\"journals\") then \
+        ([.journals[] | select( has(\"details\") and ( .details[] | select(.name == \"remaining_hours\") )) | .details[] | select( .name==\"remaining_hours\")] | .[length-1] | if has(\"new_value\") then .new_value | tonumber else null end) \
+        else null end ),\
+      notes: ( if has(\"journals\") then \
+        ([.journals[] | select( has(\"notes\") and .notes !=\"\" ) | {notes: .notes, user_id: .user.id, user_name: .user.name , created_on: .created_on}]) \
+        else [] end ),\
+      children: (if has(\"children\") then [.children[] | { id: .id, subject: .subject}] else [] end)\
+    }]")
+  echo "$TASK_JSON"
+}
+
+function task_line_from_json(){
+    : ${SPACES:=''}
+    if [ "${EXTENDED}" == "1" ]; then
+      # TODO: when the description contains new lines ('\r\n')
+      #       the result is strange
+      jq -r -c "(if type == \"array\" then .[] else . end |\
+\"${SPACES}\(.id): [\(.spent_hours//\"!\")-\(.remaining_hours//\"!\")-\(.estimated_hours//\"!\")] \(.status_name) [\(.assigned_to_name)] : \(.subject) - \(.parent_id//\"\") \
+\(.fixed_version_name) \
+\(if (.description != null) and (.description != \"\") then (\"\n${SPACES}    \(.description)\") else \"\" end) \
+\(if (.notes | length) > 0 then ([.notes[] |\"\n${SPACES}    note: \(.notes)\"]| add ) else \"\" end) \
+\"\
+      )"
+#\"${SPACES}\(.id): [\(.spent_hours//\"!\")-\(.remaining_hours//\"!\")-\(.estimated_hours//\"!\")] \(.status_name) [\(.assigned_to_name)] : \(.subject) - \(.parent_id) \(. fixed_version_name//\"\")\"\
+    else
+      echo "$1" | jq -r "(if type == \"array\" then .[] else . end |\
+\"${SPACES}\(.id): [\(.spent_hours//\"!\")-\(.remaining_hours//\"!\")-\(.estimated_hours//\"!\")] \(.status_name) [\(.assigned_to_name)] : '\(.subject)'\"\
+      )"
+    fi
+}
+
+function write_issue() {
+  ISSUE_ID=$1
+  VALUES=$2
+  echo "$VALUES" | sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
+  curl -X PUT -H "Content-type:application/json" -s -3 -d @- "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}"
+}
+
+function assert_json() {
+  echo "$1" | jq -e '.' >/dev/null 2>&1 && echo "a"
+}
+
+#TASK_JSON=$(issue $1)
+#echo "$TASK_JSON"
+#task_line_from_json "$TASK_JSON"
+
+if [ "$#" -ge 1 ]; then
+  if [ $(echo "$1" | grep "^[0-9]*\(,[0-9]*\)*$") ]; then
+    IDS=$(echo "$1" | tr ',' '\n')
+    shift
+    for ID in $IDS
+    do
+      #echo ">$ID<"
+      TASK_JSON=$(issue $ID)
+      #echo "$TASK_JSON"
+
+
+      #redtask 3126 des "{\\\"hi\\\":4}"
+      if [ "$1" = "des" ]; then
+        if [ -n "$2" ]; then
+          write_issue $ID "'description':'$2'"
+        else 
+          echo "$TASK_JSON" | jq -r '.[] | .description'
+        fi
+      elif [ "$1" = "apd" ]; then
+        OLD_DESCRIPTION="$(echo "$TASK_JSON" | jq -r '.[] | .description')"
+        #echo ">$OLD_DESCRIPTION<"
+        if [ $(assert_json "$OLD_DESCRIPTION") ]; then
+          echo "desc is json"
+          if [ -n "$2" ]; then
+            # $2='.a="4" | .b=5'
+            NEW_DESCRIPTION=$(echo "$OLD_DESCRIPTION" | jq -c "$2" | sed -e 's/"/\\\"/g')
+            echo ">$NEW_DESCRIPTION<"
+            write_issue $ID "'description':'${NEW_DESCRIPTION}'"
+          else 
+            echo "$OLD_DESCRIPTION"
+          fi
+        else
+          echo "desc is not json"
+        fi
+#        if [ -n "$2" ]; then
+#          write_issue $ID "'description':'${OLD_DESCRIPTION}$2'"
+#        else 
+#          echo "$OLD_DESCRIPTION"
+#        fi
+      else 
+
+        if [ -n "$LINE" ]; then
+          task_line_from_json "$TASK_JSON"
+        else 
+          if [ -n "$JSON_PRETTY" ]; then
+            echo "$TASK_JSON" | jq '.'
+          else
+            echo "$TASK_JSON"
+          fi
+        fi
+
+      fi
+
+
+    done
+  fi
+fi
+

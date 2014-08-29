@@ -1,0 +1,64 @@
+#!/bin/bash
+
+function assert_permissions() {
+  if [ -n "$(cat $1 | egrep "^ *KEY=('|\")\w*('|\")$")" ]; then
+    if [ -n "$( find $1 -perm +0077 )" ]
+    then 
+      echo "configuration file: '$1' with API KEY defnition has insecure permission settings" >&2
+      echo "  group and others should have no access rights" >&2
+      exit 1
+    fi
+  fi
+}
+
+function assert_statements() {
+  ORIGINAL_CONTENT=$(cat -n $1)
+  FILTERED_CONTENT=$(echo "$ORIGINAL_CONTENT" | grep -v "^ *[0-9]*\t#.*$")
+  #FILTERED_CONTENT=$(echo "$ORIGINAL_CONTENT" | grep -v "#")
+  FILTERED_CONTENT=$(echo "$FILTERED_CONTENT" | grep -v "^ *[0-9]*\t$")
+  #FILTERED_CONTENT=$(echo "$FILTERED_CONTENT" | egrep "^[^ ]*=[^;&]*$")
+
+  NOT_ALLOWED_STATEMENTS=""
+  NOT_ALLOWED_STATEMENTS="${NOT_ALLOWED_STATEMENTS}$( echo "$FILTERED_CONTENT" |\
+    grep -v "^ *[0-9]* *[^ ]*=\('\|\"\).*\('\|\"\)$" )"
+  if [ -n "$NOT_ALLOWED_STATEMENTS" ]; then
+    NOT_ALLOWED_STATEMENTS=$NOT_ALLOWED_STATEMENTS$'\n'
+  fi
+  NOT_ALLOWED_STATEMENTS="${NOT_ALLOWED_STATEMENTS}$( echo "$FILTERED_CONTENT" |\
+    grep "\$\((\|{\)" )"
+  if [ -n "$NOT_ALLOWED_STATEMENTS" ]; then
+    NOT_ALLOWED_STATEMENTS=$NOT_ALLOWED_STATEMENTS$'\n'
+  fi
+
+  if [ -n "$NOT_ALLOWED_STATEMENTS" ]; then
+    echo "configuration file: '$1' contains not allowed statements!" >&2
+    echo "statements must be of format: VARIALBE_NAME='VALUE'." >&2
+    echo "${NOT_ALLOWED_STATEMENTS}" >&2
+    exit 1
+  fi
+}
+
+if [ -f ~/.ssh/.redmine ]; then
+  assert_permissions ~/.ssh/.redmine
+  assert_statements ~/.ssh/.redmine
+  source ~/.ssh/.redmine
+fi
+
+if [ -f ~/.redmine ]; then
+  assert_permissions ~/.redmine
+  assert_statements ~/.redmine
+  source ~/.redmine
+fi
+
+if [ -f .redmine ]; then
+  assert_permissions .redmine
+  assert_statements .redmine
+  source .redmine
+fi
+
+if [ -n "$CONFIG_FILE" ]; then
+  assert_permissions $CONFIG_FILE
+  assert_statements $CONFIG_FILE
+  source $CONFIG_FILE
+fi
+
