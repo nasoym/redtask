@@ -143,8 +143,8 @@ if [ "$#" -ge 1 ]; then
   if [ $(echo "$1" | grep "^[0-9]*\(,[0-9]*\)*$") ]; then
     IDS=$(echo "$1" | tr ',' '\n')
     shift
-    ALL_TASKS_JSON="$(load_json_of_ids "$IDS" 0)"
-
+    #ALL_TASKS_JSON="$(load_json_of_ids "$IDS" 0)"
+    ALL_TASKS_JSON="$(load_json_of_ids "$IDS" 1)"
 
     if [ "$1" = "sub" ]; then
       if [ -n "$2" ]; then
@@ -173,6 +173,23 @@ if [ "$#" -ge 1 ]; then
         done
       else 
         echo "$ALL_TASKS_JSON" | jq -r '.[] | .description'
+      fi
+    elif [ "$1" = "key" ] && [ -n "$2" ]; then
+      KEY=$2
+      if [ -n "$3" ]; then
+        for ID in $IDS
+        do
+          OLD_VALUE=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)|.$KEY")
+          if [ -n "$APPEND" ]; then
+            NEW_VALUE="${OLD_VALUE}$3"
+          else
+            NEW_VALUE="$3"
+          fi
+          echo "new: $NEW_VALUE"
+          write_issue $ID "'$KEY':'$NEW_VALUE'"
+        done
+      else 
+        echo "$ALL_TASKS_JSON" | jq -r ".[] | .$KEY"
       fi
     elif [ "$1" = "jdes" ]; then
       if [ -n "$2" ]; then
