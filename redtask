@@ -55,6 +55,7 @@ function issue() {
       id: .id, \
       subject: .subject,\
       description: .description,\
+      json_description: null,\
       story_points: .story_points,\
       status_name: .status.name, \
       status_id: .status.id, \
@@ -75,6 +76,11 @@ function issue() {
         else [] end ),\
       children: (if has(\"children\") then [.children[] | { id: .id, subject: .subject}] else [] end)\
     }]")
+  TASK_JSON="$(echo "$TASK_JSON" | jq -c '.[]')"
+  DESCRIPTION="$(echo "$TASK_JSON" | jq -r '.description')"
+  if [ $(assert_json "$DESCRIPTION") ]; then
+    TASK_JSON=$(echo "$TASK_JSON" | jq -c ".json_description=$DESCRIPTION")
+  fi
   echo "$TASK_JSON"
 }
 
@@ -127,7 +133,7 @@ function load_json_of_ids() {
   FIRST_ELEMENT=true
   for ID in $IDS
   do
-    TASK_JSON=$(issue $ID | jq -c '.[]')
+    TASK_JSON=$(issue $ID)
 
       if [ "$DEPTH" -gt 0 ];then
         CHILD_IDS=$(echo "$TASK_JSON" | jq -r ".children[] | .id")
