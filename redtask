@@ -5,11 +5,15 @@ source $SCRIPT_PATH/_redmine_api_config_file
 
 : ${ISSUE_LIMIT:="400"}
 : ${USER_ID:="me"}
+: ${CHILD_DEPTH:=0}
 
 PARSED_OPTIONS=""
-while getopts "p:s:elja" options; do
+while getopts "p:s:eljac:" options; do
   PARSED_OPTIONS="${PARSED_OPTIONS} -${options}${OPTARG}"
   case $options in
+    c )
+        CHILD_DEPTH=$OPTARG
+        ;;
     p )
         PROJECT_ID=$OPTARG
         ;;
@@ -149,8 +153,7 @@ if [ "$#" -ge 1 ]; then
   if [ $(echo "$1" | grep "^[0-9]*\(,[0-9]*\)*$") ]; then
     IDS=$(echo "$1" | tr ',' '\n')
     shift
-    ALL_TASKS_JSON="$(load_json_of_ids "$IDS" 0)"
-    #ALL_TASKS_JSON="$(load_json_of_ids "$IDS" 1)"
+    ALL_TASKS_JSON="$(load_json_of_ids "$IDS" $CHILD_DEPTH)"
 
     if [ "$1" = "sub" ]; then
       if [ -n "$2" ]; then
@@ -196,6 +199,16 @@ if [ "$#" -ge 1 ]; then
       else 
         echo "$ALL_TASKS_JSON" | jq -r ".[] | .$KEY"
       fi
+    elif [ "$1" = "add_task" ] && [ -n "$2" ]; then
+      for ID in $IDS; do
+        echo "'subject':'$2'" |\
+        sed -e "s/$/,'project_id':$PROJECT_ID/g" |\
+        sed -e "s/$/,'parent_issue_id':$ID/g" |\
+        sed -e "s/$/,'tracker_id':4/g" |\
+        sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
+        curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
+        jq '.issue.id'
+      done
 
     elif [ "$1" = "jdes" ]; then
       if [ -n "$2" ]; then
@@ -233,7 +246,27 @@ if [ "$#" -ge 1 ]; then
       fi
 
     else
-      echo "$ALL_TASKS_JSON"
+      if [ -n "$LINE" ] && [ "$LINE" -eq 1 ]; then
+        TASK_JSON_LINES="$(echo "$ALL_TASKS_JSON" | jq -c '.[]')"
+
+        OLD_IFS="$IFS"
+        IFS=$'\n'
+        IFS=${IFS:0:1}
+        TASK_JSONS=(${TASK_JSON_LINES})
+        IFS=$OLD_IFS
+
+        for TASK_JSON in "${TASK_JSONS[@]}"; do
+          task_line_from_json "$TASK_JSON"
+        done
+
+      else
+        if [ -n "$JSON_PRETTY" ] && [ "$JSON_PRETTY" -eq 1 ]; then
+          echo "$ALL_TASKS_JSON" | jq '.'
+        else
+          echo "$ALL_TASKS_JSON"
+        fi
+      fi
+
     fi
 
   elif [ "$1" = "create_task" ]; then
