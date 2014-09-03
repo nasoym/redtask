@@ -209,6 +209,23 @@ if [ "$#" -ge 1 ]; then
       else 
         echo "$ALL_TASKS_JSON" | jq -r ".[] | .$KEY"
       fi
+
+    elif [ "$1" = "done" ]; then
+      for ID in $IDS; do
+        write_issue $ID "'status_id':'5'"
+      done
+
+    elif [ "$1" = "doing" ]; then
+      for ID in $IDS; do
+       # write_issue $ID "'status_id':'2'"
+        echo $ID "'status_id':'2'"
+      done
+
+    elif [ "$1" = "delete" ]; then
+      for ID in $IDS; do
+        curl -X DELETE -s -3 "https://$SERVER/issues/$ID.json?key=$KEY"
+      done
+
     elif [ "$1" = "add_task" ] && [ -n "$2" ]; then
       for ID in $IDS; do
         echo "'subject':'$2'" |\
