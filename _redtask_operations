@@ -1,5 +1,21 @@
 #!/bin/bash
 
+function write_issue() {
+  ISSUE_ID=$1
+  VALUES=$2
+  CURL_STRING=$(echo "$VALUES" | sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g")
+  echo "$CURL_STRING" |\
+  curl -X PUT -H "Content-type:application/json" -s -3 -d @- "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}"
+}
+
+
+if [ "$#" -ge 1 ]; then
+  if [ "$1" = "append" ]; then
+    shift
+    APPEND=1
+  fi
+fi
+
 if [ "$#" -ge 1 ]; then
 
   if [ "$1" = "done" ]; then
@@ -29,6 +45,52 @@ if [ "$#" -ge 1 ]; then
       shift
       for ID in $IDS; do
         write_issue $ID "'assigned_to_id':$OWNER"
+      done
+
+    elif [ "$1" = "key" ] && [ "$#" -ge 3 ]; then
+      KEY_NAME="$2"
+      VALUE_ARGUMENT="$3"
+      shift
+      shift
+      shift
+      for ID in $IDS
+      do
+        if [ -n "$APPEND" ]; then
+          load_json_content_of_ids
+          OLD_VALUE="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)|.$KEY_NAME")"
+          NEW_VALUE="${OLD_VALUE} ${VALUE_ARGUMENT}"
+        else
+          NEW_VALUE="$VALUE_ARGUMENT"
+        fi
+        write_issue $ID "'$KEY_NAME':'$NEW_VALUE'"
+      done
+
+    elif [ "$1" = "json" ]; then
+      VALUE_ARGUMENT="$2"
+      shift
+      shift
+      load_json_content_of_ids
+
+      for ID in $IDS
+      do
+        OLD_VALUE=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)|.description")
+        if [ -n "$APPEND" ]; then
+          if [ $(assert_json "$OLD_VALUE") ]; then
+            #redtask 3126 des "{\\\"hi\\\":4}"
+            # $2='.a="4" | .b=5'
+            if [ -z "$OLD_VALUE" ];then
+              #echo "old description was empty"
+              OLD_VALUE="{}"
+            fi
+            NEW_VALUE=$(echo "$OLD_VALUE" | jq -c "$VALUE_ARGUMENT" | sed -e 's/"/\\\"/g')
+            write_issue $ID "'description':'$NEW_VALUE'"
+          else
+            echo "old description was not a json content"
+          fi
+        else
+          NEW_VALUE=$(echo "$VALUE_ARGUMENT" | sed -e 's/"/\\\"/g')
+          write_issue $ID "'description':'$NEW_VALUE'"
+        fi
       done
 
     elif [ "$1" = "add_feature" ]; then
