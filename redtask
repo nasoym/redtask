@@ -307,9 +307,9 @@ if [ "$#" -ge 1 ]; then
 
     fi
 
-  elif [ $(echo "$1" | grep "F:[a-zA-Z0-9_-]\{1,\}") ]; then
+  elif [ $(echo "$1" | grep "C:[a-zA-Z0-9_-]\{1,\}") ]; then
     #ABC="hello world"
-    VARIABLE_NAME=$(echo "$1" | sed 's/^F://g')
+    VARIABLE_NAME=$(echo "$1" | sed 's/^C://g')
     #echo ">>> $1 $VARIABLE_NAME"
     #echo ">>  ${!VARIABLE_NAME}"
     IDS=$(eval $VARIABLE_NAME)
@@ -351,4 +351,6 @@ if [ "$#" -ge 1 ]; then
 
   fi
 fi
+
+
 
