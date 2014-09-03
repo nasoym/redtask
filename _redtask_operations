@@ -1,2 +1,86 @@
 #!/bin/bash
 
+if [ "$#" -ge 1 ]; then
+
+  if [ "$1" = "done" ]; then
+    shift
+    for ID in $IDS; do
+      write_issue $ID "'status_id':'5'"
+    done
+
+  elif [ "$1" = "doing" ]; then
+    shift
+    for ID in $IDS; do
+      write_issue $ID "'status_id':'2'"
+    done
+
+  elif [ "$1" = "delete" ]; then
+    shift
+    for ID in $IDS; do
+      curl -X DELETE -s -3 "https://$SERVER/issues/$ID.json?key=$KEY"
+    done
+  fi
+
+  if [ "$#" -ge 2 ]; then
+
+    if [ "$1" = "assign" ]; then
+      OWNER="$2"
+      shift
+      shift
+      for ID in $IDS; do
+        write_issue $ID "'assigned_to_id':$OWNER"
+      done
+
+    elif [ "$1" = "add_feature" ]; then
+      SUBJECT="$2"
+      shift
+      shift
+      if [ -z "$IDS" ];then
+        KEY_VALUES=""
+        if [ -n "$ASSIGN_TO_OWNER" ]; then
+          KEY_VALUES=",'assigned_to_id':$ASSIGN_TO_OWNER"
+        fi
+        echo "'subject':'$SUBJECT'$KEY_VALUES" |\
+        sed -e "s/$/,'project_id':$PROJECT_ID/g" |\
+        sed -e "s/$/,'tracker_id':2/g" |\
+        sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
+        curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
+        jq '.issue.id'
+
+      fi
+
+    elif [ "$1" = "add_task" ]; then
+      SUBJECT="$2"
+      shift
+      shift
+      if [ -z "$IDS" ];then
+        KEY_VALUES=""
+        if [ -n "$ASSIGN_TO_OWNER" ]; then
+          KEY_VALUES=",'assigned_to_id':$ASSIGN_TO_OWNER"
+        fi
+        echo "'subject':'$SUBJECT'$KEY_VALUES" |\
+        sed -e "s/$/,'project_id':$PROJECT_ID/g" |\
+        sed -e "s/$/,'tracker_id':4/g" |\
+        sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
+        curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
+        jq '.issue.id'
+      else
+        for ID in $IDS; do
+          KEY_VALUES=""
+          if [ -n "$ASSIGN_TO_OWNER" ]; then
+            KEY_VALUES=",'assigned_to_id':$ASSIGN_TO_OWNER"
+          fi
+          echo "'subject':'$SUBJECT'$KEY_VALUES" |\
+          sed -e "s/$/,'project_id':$PROJECT_ID/g" |\
+          sed -e "s/$/,'parent_issue_id':$ID/g" |\
+          sed -e "s/$/,'tracker_id':4/g" |\
+          sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
+          curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
+          jq '.issue.id'
+        done
+      fi
+    fi
+
+  fi
+
+fi

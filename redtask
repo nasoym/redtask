@@ -1,51 +1,9 @@
 #!/bin/bash
 
 SCRIPT_PATH=$(dirname $0)
+
 source $SCRIPT_PATH/_redmine_api_config_file
-
-: ${ISSUE_LIMIT:="400"}
-: ${USER_ID:="me"}
-: ${CHILD_DEPTH:=0}
-
-# options
-# filters
-# operations
-# print
-
-PARSED_OPTIONS=""
-while getopts "p:s:eljac:o:" options; do
-  PARSED_OPTIONS="${PARSED_OPTIONS} -${options}${OPTARG}"
-  case $options in
-    o )
-        ASSIGN_TO_OWNER=$OPTARG
-        ;;
-    c )
-        CHILD_DEPTH=$OPTARG
-        ;;
-    p )
-        PROJECT_ID=$OPTARG
-        ;;
-    s )
-        SPACES=$OPTARG
-        ;;
-    e )
-        EXTENDED=1
-        ;;
-    l )
-        LINE=1
-        ;;
-    a )
-        APPEND=1
-        ;;
-    j )
-        JSON_PRETTY=1
-        ;;
-   \? ) 
-        exit 1
-        ;;
-  esac
-done
-shift $(( OPTIND - 1 ));
+source $SCRIPT_PATH/_redtask_options
 
 if [ -z "$SERVER" ] || [ -z "$PROJECT_ID" ] || [ -z "$KEY" ]; then
   echo "SERVER,PROJECT_ID or KEY variable are not defined." >&2
@@ -54,67 +12,12 @@ if [ -z "$SERVER" ] || [ -z "$PROJECT_ID" ] || [ -z "$KEY" ]; then
   exit 1
 fi
 
-function issue() {
-  ISSUE_ID=$1
-  REDMINE_ISSUE=$(curl -s -3 "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}&include=journals,children")
-  REDMINE_SINGLE_ISSUE=$(echo $REDMINE_ISSUE | jq '.issue')
-  TASK_JSON=$(echo $REDMINE_SINGLE_ISSUE |\
-    jq -c "[if type == \"array\" then .[] else . end | {\
-      id: .id, \
-      subject: .subject,\
-      description: .description,\
-      json_description: null,\
-      story_points: .story_points,\
-      status_name: .status.name, \
-      status_id: .status.id, \
-      tracker_id: .tracker.id, \
-      tracker_name: .tracker.name, \
-      fixed_version_id: .fixed_version.id, \
-      fixed_version_name: .fixed_version.name, \
-      assigned_to_name: .assigned_to.name, \
-      assigned_to_id: .assigned_to.id, \
-      parent_id: .parent.id, \
-      estimated_hours: .estimated_hours, \
-      spent_hours: .spent_hours, \
-      remaining_hours: ( if has(\"journals\") then \
-        ([.journals[] | select( has(\"details\") and ( .details[] | select(.name == \"remaining_hours\") )) | .details[] | select( .name==\"remaining_hours\")] | .[length-1] | if has(\"new_value\") then .new_value | tonumber else null end) \
-        else null end ),\
-      notes: ( if has(\"journals\") then \
-        ([.journals[] | select( has(\"notes\") and .notes !=\"\" ) | {notes: .notes, user_id: .user.id, user_name: .user.name , created_on: .created_on}]) \
-        else [] end ),\
-      children: (if has(\"children\") then [.children[] | { id: .id, subject: .subject}] else [] end)\
-    }]")
-  TASK_JSON="$(echo "$TASK_JSON" | jq -c '.[]')"
-  #echo "OLD TASK_JSON: >$TASK_JSON<" 1>&2
-  DESCRIPTION="$(echo "$TASK_JSON" | jq -r '.description')"
-  #echo "DESCRIPTION:>$DESCRIPTION<" 1>&2
-  if [ -n "$DESCRIPTION" ] && [ $(assert_json "$DESCRIPTION") ]; then
-    #echo "DESCRIPTION IS JSON" 1>&2
-    TASK_JSON=$(echo "$TASK_JSON" | jq -c ".json_description=$DESCRIPTION")
-    #echo "NEW TASK_JSON: >$TASK_JSON<" 1>&2
-  fi
-  echo "$TASK_JSON"
-}
+source $SCRIPT_PATH/_redtask_filters
+source $SCRIPT_PATH/_redtask_operations
+source $SCRIPT_PATH/_redtask_print
 
-function task_line_from_json(){
-    : ${SPACES:=''}
-    if [ "${EXTENDED}" == "1" ]; then
-      # TODO: when the description contains new lines ('\r\n')
-      #       the result is strange
-      jq -r -c "(if type == \"array\" then .[] else . end |\
-\"${SPACES}\(.id): [\(.spent_hours//\"!\")-\(.remaining_hours//\"!\")-\(.estimated_hours//\"!\")] \(.status_name) [\(.assigned_to_name)] : \(.subject) - \(.parent_id//\"\") \
-\(.fixed_version_name) \
-\(if (.description != null) and (.description != \"\") then (\"\n${SPACES}    \(.description)\") else \"\" end) \
-\(if (.notes | length) > 0 then ([.notes[] |\"\n${SPACES}    note: \(.notes)\"]| add ) else \"\" end) \
-\"\
-      )"
-#\"${SPACES}\(.id): [\(.spent_hours//\"!\")-\(.remaining_hours//\"!\")-\(.estimated_hours//\"!\")] \(.status_name) [\(.assigned_to_name)] : \(.subject) - \(.parent_id) \(. fixed_version_name//\"\")\"\
-    else
-      echo "$1" | jq -r "(if type == \"array\" then .[] else . end |\
-\"${SPACES}\(.id): [\(.spent_hours//\"!\")-\(.remaining_hours//\"!\")-\(.estimated_hours//\"!\")] \(.status_name) [\(.assigned_to_name)] : '\(.subject)'\"\
-      )"
-    fi
-}
+exit
+
 
 function write_issue() {
   ISSUE_ID=$1
@@ -128,44 +31,6 @@ function write_issue() {
   echo "$CURL_STRING" |\
   curl -X PUT -H "Content-type:application/json" -s -3 -d @- "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}"
 }
-
-function assert_json() {
-  echo "$1" | jq -e '.' >/dev/null 2>&1 && echo "a"
-}
-
-function load_json_of_ids() {
-  IDS=$1
-  DEPTH=$2
-  if [ -n "$DEPTH" ];then
-    NEXT_DEPTH=$(( DEPTH - 1 ))
-  else
-    DEPTH=0
-  fi
-  ALL_TASKS_JSON="["
-  FIRST_ELEMENT=true
-  for ID in $IDS
-  do
-    TASK_JSON=$(issue $ID)
-
-      if [ "$DEPTH" -gt 0 ];then
-        CHILD_IDS=$(echo "$TASK_JSON" | jq -r ".children[] | .id")
-        if [ -n "$CHILD_IDS" ];then
-          CHILD_TASKS_JSON="$(load_json_of_ids "$CHILD_IDS" $NEXT_DEPTH)"
-          TASK_JSON=$(echo "$TASK_JSON" | jq -c ".children=$CHILD_TASKS_JSON")
-        fi
-      fi
-
-    if [ "$FIRST_ELEMENT" = true ]; then
-      FIRST_ELEMENT=false
-    else
-      ALL_TASKS_JSON="${ALL_TASKS_JSON},"
-    fi
-    ALL_TASKS_JSON="${ALL_TASKS_JSON}${TASK_JSON}"
-  done
-  ALL_TASKS_JSON="${ALL_TASKS_JSON}]"
-  echo "$ALL_TASKS_JSON"
-}
-
 
 if [ "$#" -ge 1 ]; then
   if [ $(echo "$1" | grep "^[0-9]*\(,[0-9]*\)*$") ]; then
@@ -187,6 +52,7 @@ if [ "$#" -ge 1 ]; then
       else 
         echo "$ALL_TASKS_JSON" | jq -r '.[] | .subject'
       fi
+
     elif [ "$1" = "des" ]; then
       if [ -n "$2" ]; then
         for ID in $IDS
@@ -201,6 +67,7 @@ if [ "$#" -ge 1 ]; then
       else 
         echo "$ALL_TASKS_JSON" | jq -r '.[] | .description'
       fi
+
     elif [ "$1" = "key" ] && [ -n "$2" ]; then
       KEY="$2"
       if [ -n "$3" ]; then
@@ -218,40 +85,7 @@ if [ "$#" -ge 1 ]; then
         echo "$ALL_TASKS_JSON" | jq -r ".[] | .$KEY"
       fi
 
-    elif [ "$1" = "done" ]; then
-      for ID in $IDS; do
-        write_issue $ID "'status_id':'5'"
-      done
 
-    elif [ "$1" = "doing" ]; then
-      for ID in $IDS; do
-        write_issue $ID "'status_id':'2'"
-      done
-
-    elif [ "$1" = "assign" ] && [ -n "$2" ]; then
-      for ID in $IDS; do
-        write_issue $ID "'assigned_to_id':$2"
-      done
-
-    elif [ "$1" = "delete" ]; then
-      for ID in $IDS; do
-        curl -X DELETE -s -3 "https://$SERVER/issues/$ID.json?key=$KEY"
-      done
-
-    elif [ "$1" = "add_task" ] && [ -n "$2" ]; then
-      for ID in $IDS; do
-        KEY_VALUES=""
-        if [ -n "$ASSIGN_TO_OWNER" ]; then
-          KEY_VALUES=",'assigned_to_id':$ASSIGN_TO_OWNER"
-        fi
-        echo "'subject':'$2'$KEY_VALUES" |\
-        sed -e "s/$/,'project_id':$PROJECT_ID/g" |\
-        sed -e "s/$/,'parent_issue_id':$ID/g" |\
-        sed -e "s/$/,'tracker_id':4/g" |\
-        sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
-        curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
-        jq '.issue.id'
-      done
 
     elif [ "$1" = "jdes" ]; then
       if [ -n "$2" ]; then
@@ -287,72 +121,7 @@ if [ "$#" -ge 1 ]; then
           echo "$OLD_VALUE"
         done
       fi
-
-    else
-      if [ -n "$LINE" ] && [ "$LINE" -eq 1 ]; then
-        TASK_JSON_LINES="$(echo "$ALL_TASKS_JSON" | jq -c '.[]')"
-
-        OLD_IFS="$IFS"
-        IFS=$'\n'
-        IFS=${IFS:0:1}
-        TASK_JSONS=(${TASK_JSON_LINES})
-        IFS=$OLD_IFS
-
-        for TASK_JSON in "${TASK_JSONS[@]}"; do
-          task_line_from_json "$TASK_JSON"
-        done
-
-      else
-        if [ -n "$JSON_PRETTY" ] && [ "$JSON_PRETTY" -eq 1 ]; then
-          echo "$ALL_TASKS_JSON" | jq '.'
-        else
-          echo "$ALL_TASKS_JSON"
-        fi
-      fi
-
     fi
-
-  elif [ $(echo "$1" | grep "C:[a-zA-Z0-9_-]\{1,\}") ]; then
-    #ABC="hello world"
-    VARIABLE_NAME=$(echo "$1" | sed 's/^C://g')
-    #echo ">>> $1 $VARIABLE_NAME"
-    #echo ">>  ${!VARIABLE_NAME}"
-    IDS=$(eval $VARIABLE_NAME)
-    #IDS=$(echo "$1" | tr ',' '\n')
-    shift
-    ALL_TASKS_JSON="$(load_json_of_ids "$IDS" $CHILD_DEPTH)"
-
-      if [ -n "$LINE" ] && [ "$LINE" -eq 1 ]; then
-        TASK_JSON_LINES="$(echo "$ALL_TASKS_JSON" | jq -c '.[]')"
-
-        OLD_IFS="$IFS"
-        IFS=$'\n'
-        IFS=${IFS:0:1}
-        TASK_JSONS=(${TASK_JSON_LINES})
-        IFS=$OLD_IFS
-
-        for TASK_JSON in "${TASK_JSONS[@]}"; do
-          task_line_from_json "$TASK_JSON"
-        done
-
-      else
-        if [ -n "$JSON_PRETTY" ] && [ "$JSON_PRETTY" -eq 1 ]; then
-          echo "$ALL_TASKS_JSON" | jq '.'
-        else
-          echo "$ALL_TASKS_JSON"
-        fi
-      fi
-
-
-  elif [ "$1" = "create_task" ]; then
-    :
-  elif [ "$1" = "create_feature" ]; then
-    echo "'subject':'$2'" |\
-    sed -e "s/$/,'project_id':$PROJECT_ID/g" |\
-    sed -e "s/$/,'tracker_id':2/g" |\
-    sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
-    curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
-    jq '.issue.id'
 
   fi
 fi
