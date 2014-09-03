@@ -20,6 +20,24 @@ function task_line_from_json(){
     fi
 }
 
+function json_line_print(){
+  JSON="$1"
+  local LEADING_SPACES="$2"
+
+  echo "$JSON" | jq -r "\"${LEADING_SPACES}\(.id) \(.subject) \(.status_name//\"\")\""
+  CHILD_TASKS="$(echo "$JSON" | jq -r -c 'if has("children") then .children[] else "" end')"
+  if [ -n "$CHILD_TASKS" ];then
+    OLD_IFS="$IFS"
+    IFS=$'\n'
+    IFS=${IFS:0:1}
+    ALL_CHILD_JSONS=(${CHILD_TASKS})
+    IFS=$OLD_IFS
+    for CHILD_JSON in "${ALL_CHILD_JSONS[@]}"; do
+      json_line_print "$CHILD_JSON" "$LEADING_SPACES    "
+    done
+  fi
+}
+
 if [ "$#" -ge 1 ]; then
   if [ "$1" = "lines" ]; then
     shift
@@ -33,13 +51,8 @@ if [ "$#" -ge 1 ]; then
     IFS=$OLD_IFS
 
     for TASK_JSON in "${TASK_JSONS[@]}"; do
-      task_line_from_json "$TASK_JSON"
+      json_line_print "$TASK_JSON"
     done
-
-  elif [ "$1" = "childlines" ]; then
-    shift
-    load_json_content_of_ids
-    echo ">>>>>>>>>>>>>"
 
   elif [ "$1" = "pretty" ]; then
     shift
