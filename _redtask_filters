@@ -85,6 +85,8 @@ IDS=""
 function load_json_content_of_ids() {
   if [ -z "$ALL_TASKS_JSON" ] && [ -n "$IDS" ];then
     ALL_TASKS_JSON="$(load_json_of_ids "$IDS" $CHILD_DEPTH)"
+  elif [ -z "$ALL_TASKS_JSON" ] && [ -z "$IDS" ];then
+    ALL_TASKS_JSON="[]"
   fi
 }
 
