@@ -5,7 +5,7 @@
 : ${CHILD_DEPTH:=0}
 
 PARSED_OPTIONS=""
-while getopts "p:s:eljac:o:" options; do
+while getopts "p:s:eac:o:" options; do
   PARSED_OPTIONS="${PARSED_OPTIONS} -${options}${OPTARG}"
   case $options in
     o )
@@ -23,14 +23,8 @@ while getopts "p:s:eljac:o:" options; do
     e )
         EXTENDED=1
         ;;
-    l )
-        LINE=1
-        ;;
     a )
         APPEND=1
-        ;;
-    j )
-        JSON_PRETTY=1
         ;;
    \? ) 
         exit 1
