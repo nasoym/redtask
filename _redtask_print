@@ -21,14 +21,9 @@ function task_line_from_json(){
 }
 
 if [ "$#" -ge 1 ]; then
-  if [ "$1" = "nop" ]; then
+  if [ "$1" = "lines" ]; then
     shift
-    echo "NOP Print"
-  fi
-fi
-
-if [ -n "$ALL_TASKS_JSON" ];then
-  if [ -n "$LINE" ] && [ "$LINE" -eq 1 ]; then
+    load_json_content_of_ids
     TASK_JSON_LINES="$(echo "$ALL_TASKS_JSON" | jq -c '.[]')"
 
     OLD_IFS="$IFS"
@@ -41,13 +36,26 @@ if [ -n "$ALL_TASKS_JSON" ];then
       task_line_from_json "$TASK_JSON"
     done
 
-  else
-    if [ -n "$JSON_PRETTY" ] && [ "$JSON_PRETTY" -eq 1 ]; then
-      echo "$ALL_TASKS_JSON" | jq '.'
-    else
-      echo "$ALL_TASKS_JSON"
-    fi
+  elif [ "$1" = "childlines" ]; then
+    shift
+    load_json_content_of_ids
+    echo ">>>>>>>>>>>>>"
+
+  elif [ "$1" = "pretty" ]; then
+    shift
+    load_json_content_of_ids
+    echo "$ALL_TASKS_JSON" | jq '.'
+
+  elif [ "$1" = "json" ]; then
+    shift
+    load_json_content_of_ids
+    echo "$ALL_TASKS_JSON"
+
+  elif [ "$1" = "ids" ]; then
+    shift
+    echo "$IDS"
   fi
-elif [ -n "$IDS" ];then
+else
   echo "$IDS"
 fi
+
