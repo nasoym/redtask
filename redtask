@@ -7,6 +7,11 @@ source $SCRIPT_PATH/_redmine_api_config_file
 : ${USER_ID:="me"}
 : ${CHILD_DEPTH:=0}
 
+# options
+# filters
+# operations
+# print
+
 PARSED_OPTIONS=""
 while getopts "p:s:eljac:o:" options; do
   PARSED_OPTIONS="${PARSED_OPTIONS} -${options}${OPTARG}"
