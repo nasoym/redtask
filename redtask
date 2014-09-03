@@ -279,6 +279,38 @@ if [ "$#" -ge 1 ]; then
 
     fi
 
+  elif [ $(echo "$1" | grep "F:[a-zA-Z0-9_-]\{1,\}") ]; then
+    #ABC="hello world"
+    VARIABLE_NAME=$(echo "$1" | sed 's/^F://g')
+    #echo ">>> $1 $VARIABLE_NAME"
+    #echo ">>  ${!VARIABLE_NAME}"
+    IDS=$(eval $VARIABLE_NAME)
+    #IDS=$(echo "$1" | tr ',' '\n')
+    shift
+    ALL_TASKS_JSON="$(load_json_of_ids "$IDS" $CHILD_DEPTH)"
+
+      if [ -n "$LINE" ] && [ "$LINE" -eq 1 ]; then
+        TASK_JSON_LINES="$(echo "$ALL_TASKS_JSON" | jq -c '.[]')"
+
+        OLD_IFS="$IFS"
+        IFS=$'\n'
+        IFS=${IFS:0:1}
+        TASK_JSONS=(${TASK_JSON_LINES})
+        IFS=$OLD_IFS
+
+        for TASK_JSON in "${TASK_JSONS[@]}"; do
+          task_line_from_json "$TASK_JSON"
+        done
+
+      else
+        if [ -n "$JSON_PRETTY" ] && [ "$JSON_PRETTY" -eq 1 ]; then
+          echo "$ALL_TASKS_JSON" | jq '.'
+        else
+          echo "$ALL_TASKS_JSON"
+        fi
+      fi
+
+
   elif [ "$1" = "create_task" ]; then
     :
   elif [ "$1" = "create_feature" ]; then
