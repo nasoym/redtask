@@ -77,9 +77,13 @@ function issue() {
       children: (if has(\"children\") then [.children[] | { id: .id, subject: .subject}] else [] end)\
     }]")
   TASK_JSON="$(echo "$TASK_JSON" | jq -c '.[]')"
+  #echo "OLD TASK_JSON: >$TASK_JSON<" 1>&2
   DESCRIPTION="$(echo "$TASK_JSON" | jq -r '.description')"
-  if [ $(assert_json "$DESCRIPTION") ]; then
+  #echo "DESCRIPTION:>$DESCRIPTION<" 1>&2
+  if [ -n "$DESCRIPTION" ] && [ $(assert_json "$DESCRIPTION") ]; then
+    #echo "DESCRIPTION IS JSON" 1>&2
     TASK_JSON=$(echo "$TASK_JSON" | jq -c ".json_description=$DESCRIPTION")
+    #echo "NEW TASK_JSON: >$TASK_JSON<" 1>&2
   fi
   echo "$TASK_JSON"
 }
