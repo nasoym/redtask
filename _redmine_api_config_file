@@ -40,25 +40,25 @@ function assert_statements() {
 
 if [ -f ~/.ssh/.redmine ]; then
   assert_permissions ~/.ssh/.redmine
-  assert_statements ~/.ssh/.redmine
+  #assert_statements ~/.ssh/.redmine
   source ~/.ssh/.redmine
 fi
 
 if [ -f ~/.redmine ]; then
   assert_permissions ~/.redmine
-  assert_statements ~/.redmine
+  #assert_statements ~/.redmine
   source ~/.redmine
 fi
 
 if [ -f .redmine ]; then
   assert_permissions .redmine
-  assert_statements .redmine
+  #assert_statements .redmine
   source .redmine
 fi
 
 if [ -n "$CONFIG_FILE" ]; then
   assert_permissions $CONFIG_FILE
-  assert_statements $CONFIG_FILE
+  #assert_statements $CONFIG_FILE
   source $CONFIG_FILE
 fi
 
