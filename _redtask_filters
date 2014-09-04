@@ -112,9 +112,15 @@ if [ "$#" -ge 1 ]; then
     load_json_content_of_ids
     ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[]| select(.story_points<=0.5)]' )
 
-  elif [ "$1" = "content" ]; then
+  elif [ "$1" = "open" ]; then
     shift
     load_json_content_of_ids
+    #TODO: run filter on all child issues
+    #echo '{"a":44,"b":[{"a":1},{"a":2},{"a":3}]}' | jq -c '.b= (.b | del(.[] | select(.a<2)) )'
+    #echo '[{"a":44,"b":[{"a":1},{"a":2},{"a":3}]},{"a":55,"b":[{"a":99}]}]' | jq -c '[.[] | .b= (.b | del(.[] | select(.a<2)) )]'
+    ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | .children=(.children | del(.[] | select(.status_id == 5 or .status_id == 6)) )]')
+
   fi
+
 fi
 

@@ -20,20 +20,55 @@ function task_line_from_json(){
     fi
 }
 
-function json_line_print(){
-  JSON="$1"
-  local LEADING_SPACES="$2"
+function print_command() {
+  local JSON="$1"
+  echo "$JSON" |\
+  jq -r "\"\(.id) \(.subject) \(.status_name//\"\")\""
+}
 
-  echo "$JSON" | jq -r "\"${LEADING_SPACES}\(.id) \(.subject) \(.status_name//\"\")\""
-  CHILD_TASKS="$(echo "$JSON" | jq -r -c 'if has("children") then .children[] else "" end')"
+function print_command_details() {
+  local JSON="$1"
+  local FEATURE=$(echo "$JSON" | jq -r 'if .tracker_name == "Feature" then 1 else 0 end')
+  if [ "$FEATURE" -eq 1 ]; then
+    tput setaf 5
+    echo "$JSON" |\
+    jq -r "\"\(.id) \(.assigned_to_name//\"\"): \\\"\(.subject)\\\"\""
+    tput sgr0
+  else
+    local STATUS_IN_WORK=$(echo "$JSON" | jq -r 'if .status_id == 2 then 1 else 0 end')
+    if [ "$STATUS_IN_WORK" -eq 1 ]; then
+      tput setaf 3
+      echo "$JSON" |\
+      jq -r "\"\(.id) [\(.remaining_hours//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to_name//\"\"): \(.json_description.tags//\"\") \\\"\(.subject)\\\"\""
+      tput sgr0
+    else
+      echo "$JSON" |\
+      jq -r "\"\(.id) [\(.remaining_hours//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to_name//\"\"): \(.json_description.tags//\"\") \\\"\(.subject)\\\"\""
+    fi
+  fi
+}
+
+function json_line_print(){
+  local JSON="$1"
+  local LEADING_SPACES="$2"
+  local PRINT_COMMAND="$3"
+
+  echo -n "$LEADING_SPACES"
+  if [ -n "$PRINT_COMMAND" ]; then
+    $PRINT_COMMAND "$JSON"
+  else 
+    print_command "$JSON"
+  fi
+
+  local CHILD_TASKS="$(echo "$JSON" | jq -r -c 'if has("children") then .children[] else "" end')"
   if [ -n "$CHILD_TASKS" ];then
-    OLD_IFS="$IFS"
-    IFS=$'\n'
-    IFS=${IFS:0:1}
-    ALL_CHILD_JSONS=(${CHILD_TASKS})
-    IFS=$OLD_IFS
+    local OLD_IFS="$IFS"
+    local IFS=$'\n'
+    local IFS=${IFS:0:1}
+    local ALL_CHILD_JSONS=(${CHILD_TASKS})
+    local IFS=$OLD_IFS
     for CHILD_JSON in "${ALL_CHILD_JSONS[@]}"; do
-      json_line_print "$CHILD_JSON" "$LEADING_SPACES    "
+      json_line_print "$CHILD_JSON" "$LEADING_SPACES    " "$PRINT_COMMAND"
     done
   fi
 }
@@ -42,6 +77,8 @@ if [ "$#" -ge 1 ]; then
   if [ "$1" = "lines" ]; then
     shift
     load_json_content_of_ids
+    ALL_TASKS_JSON="$(echo "$ALL_TASKS_JSON" |\
+    jq -c '. | sort_by(.status_id) | reverse' )"
     TASK_JSON_LINES="$(echo "$ALL_TASKS_JSON" | jq -c '.[]')"
 
     OLD_IFS="$IFS"
@@ -51,7 +88,7 @@ if [ "$#" -ge 1 ]; then
     IFS=$OLD_IFS
 
     for TASK_JSON in "${TASK_JSONS[@]}"; do
-      json_line_print "$TASK_JSON"
+      json_line_print "$TASK_JSON" "" "print_command_details"
     done
 
   elif [ "$1" = "pretty" ]; then
