@@ -1,4 +1,3 @@
-# Redmine CLI
+# RedTask
 
-This repository contains different tools which enable to edit and view redmine wiki pages and issues
-from the command line.
+This repository contains a command line tool which can interact with redmine issues.
