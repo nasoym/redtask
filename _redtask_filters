@@ -117,5 +117,19 @@ if [ "$#" -ge 1 ]; then
     #echo '[{"a":44,"b":[{"a":1},{"a":2},{"a":3}]},{"a":55,"b":[{"a":99}]}]' | jq -c '[.[] | .b= (.b | del(.[] | select(.a<2)) )]'
     ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | .children=(.children | del(.[] | select(.status_id == 5 or .status_id == 6)) )]')
 
+  elif [ "$1" = "hirachy" ]; then
+    shift
+    NO_PARENT="$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | select(has("parent")|not)]')"
+    WITH_PARENT="$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | select(has("parent"))]')"
+    IDS_WITH_PARENT="$(echo "$WITH_PARENT" | jq '.[]|.id')"
+    for ID in $IDS_WITH_PARENT; do
+      JSON="$(echo "$WITH_PARENT" | jq -r ".[]| select(.id==$ID)")"
+      PARENT="$(echo "$JSON" | jq '.parent.id')"
+      NO_PARENT="$(echo "$NO_PARENT" | jq -c "[.[] | if .id==$PARENT then .children+=[$JSON] else . end]")"
+    done
+    ALL_TASKS_JSON="$NO_PARENT"
+    IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+
   fi
 fi
+
