@@ -114,6 +114,11 @@ while true;do
       #echo '[{"a":44,"b":[{"a":1},{"a":2},{"a":3}]},{"a":55,"b":[{"a":99}]}]' | jq -c '[.[] | .b= (.b | del(.[] | select(.a<2)) )]'
       ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | .children=(.children | del(.[] | select(.status_id == 5 or .status_id == 6)) )]')
 
+    elif [ "$1" = "assigned" ] && [ "$#" -ge 2 ]; then
+      USER_ID="$2"      
+      shift 2
+      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.assigned_to.id==$USER_ID)]" )
+
     elif [ "$1" = "hirachy" ]; then
       shift
       NO_PARENT="$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | select(has("parent")|not)]')"
