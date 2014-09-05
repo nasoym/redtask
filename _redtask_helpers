@@ -22,12 +22,60 @@ function json_lines_to_json_array() {
     echo "$JSON_ARRAY"
 }
 
+function write_issue() {
+  local ISSUE_ID=$1
+  local VALUES=$2
+  local CURL_STRING=$(echo "$VALUES" | sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g")
+  echo "$CURL_STRING" |\
+  curl -X PUT -H "Content-type:application/json" -s -3 -d @- "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}"
+}
+
+function modify_custom_json() {
+  local ID="$1"
+  local JSON="$2"  
+  local JSON_MODIFICATION="$3"
+  local OLD_VALUE=$(echo "$JSON" | jq -r ".description")
+  if [ $(assert_json "$OLD_VALUE") ]; then
+    #redtask 3126 des "{\\\"hi\\\":4}"
+    # $2='.a="4" | .b=5'
+    if [ -z "$OLD_VALUE" ];then
+      #echo "old description was empty"
+      local OLD_VALUE="{}"
+    fi
+  else
+    local OLD_VALUE="{}"
+    echo "old description was not a json content" 1>&2
+  fi
+
+  local NEW_VALUE=$(echo "$OLD_VALUE" | jq -c "$JSON_MODIFICATION" | sed -e 's/"/\\\"/g')
+  #echo "New: $NEW_VALUE" 1>&2
+  write_issue $ID "'description':'$NEW_VALUE'"
+}
+
 function ids_from_json_array() {
   echo "$(echo "$1" | jq '.[]|.id')"
 }
 
-#function load_json_content_for_ids
-#function parse_custom_json_field
-#function load_json_content_of_children
+function load_json_content_for_ids() {
+  :
+}
+
+function parse_custom_json_field() {
+  :
+#  TASK_JSON="$(echo "$TASK_JSON" | jq -c '.[]')"
+#  #echo "OLD TASK_JSON: >$TASK_JSON<" 1>&2
+#  DESCRIPTION="$(echo "$TASK_JSON" | jq -r '.description')"
+#  #echo "DESCRIPTION:>$DESCRIPTION<" 1>&2
+#  if [ -n "$DESCRIPTION" ] && [ $(assert_json "$DESCRIPTION") ]; then
+#    #echo "DESCRIPTION IS JSON" 1>&2
+#    TASK_JSON=$(echo "$TASK_JSON" | jq -c ".json_description=$DESCRIPTION")
+#    #echo "NEW TASK_JSON: >$TASK_JSON<" 1>&2
+#  fi
+#  echo "$TASK_JSON"
+}
+
+function load_json_content_of_children() {
+  :
+}
 
 

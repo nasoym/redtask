@@ -1,35 +1,5 @@
 #!/bin/bash
 
-function write_issue() {
-  ISSUE_ID=$1
-  VALUES=$2
-  CURL_STRING=$(echo "$VALUES" | sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g")
-  echo "$CURL_STRING" |\
-  curl -X PUT -H "Content-type:application/json" -s -3 -d @- "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}"
-}
-
-function modify_custom_json() {
-  local ID="$1"
-  local JSON="$2"  
-  local JSON_MODIFICATION="$3"
-  local OLD_VALUE=$(echo "$JSON" | jq -r ".description")
-  if [ $(assert_json "$OLD_VALUE") ]; then
-    #redtask 3126 des "{\\\"hi\\\":4}"
-    # $2='.a="4" | .b=5'
-    if [ -z "$OLD_VALUE" ];then
-      #echo "old description was empty"
-      OLD_VALUE="{}"
-    fi
-  else
-    OLD_VALUE="{}"
-    echo "old description was not a json content" 1>&2
-  fi
-
-  local NEW_VALUE=$(echo "$OLD_VALUE" | jq -c "$JSON_MODIFICATION" | sed -e 's/"/\\\"/g')
-  #echo "New: $NEW_VALUE" 1>&2
-  write_issue $ID "'description':'$NEW_VALUE'"
-}
-
 if [ "$#" -ge 1 ]; then
   if [ "$1" = "append" ]; then
     shift
