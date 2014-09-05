@@ -1,0 +1,7 @@
+#!/bin/bash
+
+function assert_json() {
+  echo "$1" | jq -e '.' >/dev/null 2>&1 && echo "1"
+}
+
+

@@ -42,10 +42,6 @@ function issue() {
   echo "$TASK_JSON"
 }
 
-function assert_json() {
-  echo "$1" | jq -e '.' >/dev/null 2>&1 && echo "1"
-}
-
 function load_json_of_ids() {
   IDS=$1
   DEPTH=$2
