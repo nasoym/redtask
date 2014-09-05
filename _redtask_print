@@ -104,6 +104,11 @@ if [ "$#" -ge 1 ]; then
   elif [ "$1" = "ids" ]; then
     shift
     echo "$IDS"
+
+  elif [ $(echo "$1" | grep "P:[a-zA-Z0-9_-]\{1,\}") ]; then
+    VARIABLE_NAME=$(echo "$1" | sed 's/^P://g')
+    shift
+    eval $VARIABLE_NAME
   fi
 else
   echo "$IDS"
