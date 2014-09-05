@@ -79,9 +79,6 @@ function load_json_of_ids() {
   echo "$ALL_TASKS_JSON"
 }
 
-ALL_TASKS_JSON=""
-IDS=""
-
 function load_json_content_of_ids() {
   if [ -z "$ALL_TASKS_JSON" ] && [ -n "$IDS" ];then
     echo " load json of ids" 1>&2

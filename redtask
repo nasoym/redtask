@@ -17,6 +17,9 @@ if [ -z "$SERVER" ] || [ -z "$PROJECT_ID" ] || [ -z "$KEY" ]; then
   exit 1
 fi
 
+ALL_TASKS_JSON=""
+IDS=""
+
 source $SCRIPT_PATH/_redtask_filters
 source $SCRIPT_PATH/_redtask_operations
 source $SCRIPT_PATH/_redtask_print
