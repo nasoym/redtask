@@ -90,15 +90,15 @@ if [ "$#" -ge 1 ]; then
     IDS=$(echo "$1" | tr ',' '\n')
     shift
 
-  elif [ $(echo "$1" | grep "F:[a-zA-Z0-9_-]\{1,\}") ]; then
-    VARIABLE_NAME=$(echo "$1" | sed 's/^F://g')
+  elif [ $(echo "$1" | grep "ids:[a-zA-Z0-9_-]\{1,\}") ]; then
+    VARIABLE_NAME=$(echo "$1" | sed 's/^ids://g')
     shift
-    IDS=$(eval $VARIABLE_NAME)
+    IDS="$(eval $VARIABLE_NAME)"
 
-  elif [ $(echo "$1" | grep "L:[a-zA-Z0-9_-]\{1,\}") ]; then
-    VARIABLE_NAME=$(echo "$1" | sed 's/^L://g')
+  elif [ $(echo "$1" | grep "json:[a-zA-Z0-9_-]\{1,\}") ]; then
+    VARIABLE_NAME=$(echo "$1" | sed 's/^json://g')
     shift
-    eval $VARIABLE_NAME
+    ALL_TASKS_JSON="$(eval $VARIABLE_NAME)"
 
   fi
 fi

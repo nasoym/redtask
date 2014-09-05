@@ -19,9 +19,9 @@ function current_user_id() {
 
 function current() {
   local SPRINT_ID=$(current_sprint_id)
-  local ALL=$(curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=$SPRINT_ID&sort=status:desc" |\
-  jq -c '.issues[]')
-  ALL_TASKS_JSON="$( json_lines_to_json_array "$ALL")"
+  json_lines_to_json_array \
+  "$(curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=$SPRINT_ID&sort=status:desc" |\
+  jq -c '.issues[]')"
 }
 
 #function current_user() {
