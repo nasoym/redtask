@@ -5,6 +5,10 @@ SCRIPT_PATH=$(dirname $0)
 source $SCRIPT_PATH/_redmine_api_config_file
 source $SCRIPT_PATH/_redtask_options
 
+: ${ISSUE_LIMIT:="400"}
+: ${USER_ID:="me"}
+: ${CHILD_DEPTH:=0}
+
 if [ -z "$SERVER" ] || [ -z "$PROJECT_ID" ] || [ -z "$KEY" ]; then
   echo "SERVER,PROJECT_ID or KEY variable are not defined." >&2
   echo "  These variables should either be defined as environments variables," >&2

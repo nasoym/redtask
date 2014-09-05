@@ -1,9 +1,5 @@
 #!/bin/bash
 
-: ${ISSUE_LIMIT:="400"}
-: ${USER_ID:="me"}
-: ${CHILD_DEPTH:=0}
-
 PARSED_OPTIONS=""
 while getopts "p:s:eac:o:" options; do
   PARSED_OPTIONS="${PARSED_OPTIONS} -${options}${OPTARG}"
