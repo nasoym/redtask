@@ -122,6 +122,4 @@ if [ "$#" -ge 1 ]; then
     ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | .children=(.children | del(.[] | select(.status_id == 5 or .status_id == 6)) )]')
 
   fi
-
 fi
-
