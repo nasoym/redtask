@@ -80,6 +80,14 @@ if [ "$#" -ge 1 ]; then
         write_issue $ID "'assigned_to_id':$OWNER"
       done
 
+    elif [ "$1" = "estimate" ]; then
+      ESTIMATED_HOURS="$2"
+      shift
+      shift
+      for ID in $IDS; do
+        write_issue $ID "'estimated_hours':$ESTIMATED_HOURS"
+      done
+
     elif [ "$1" = "parent" ]; then
       PARENT="$2"
       shift
