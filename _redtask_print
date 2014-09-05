@@ -23,27 +23,29 @@ function task_line_from_json(){
 function print_command() {
   local JSON="$1"
   echo "$JSON" |\
-  jq -r "\"\(.id) \(.subject) \(.status_name//\"\")\""
+  jq -r "\"\(.id) \(.subject)\""
+  #jq -r "\"\(.id) \(.subject) \(.status_name//\"\")\""
 }
 
 function print_command_details() {
   local JSON="$1"
-  local FEATURE=$(echo "$JSON" | jq -r 'if .tracker_name == "Feature" then 1 else 0 end')
+  #local FEATURE=$(echo "$JSON" | jq -r 'if .tracker_name == "Feature" then 1 else 0 end')
+  local FEATURE=$(echo "$JSON" | jq -r 'if .tracker.id == 2 then 1 else 0 end')
   if [ "$FEATURE" -eq 1 ]; then
     tput setaf 5
     echo "$JSON" |\
-    jq -r "\"\(.id) \(.assigned_to_name//\"\"): \\\"\(.subject)\\\"\""
+    jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.story_points//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"\""
     tput sgr0
   else
-    local STATUS_IN_WORK=$(echo "$JSON" | jq -r 'if .status_id == 2 then 1 else 0 end')
+    local STATUS_IN_WORK=$(echo "$JSON" | jq -r 'if .status.id == 2 then 1 else 0 end')
     if [ "$STATUS_IN_WORK" -eq 1 ]; then
       tput setaf 3
       echo "$JSON" |\
-      jq -r "\"\(.id) [\(.remaining_hours//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to_name//\"\"): \(.json_description.tags//\"\") \\\"\(.subject)\\\"\""
+      jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"\""
       tput sgr0
     else
       echo "$JSON" |\
-      jq -r "\"\(.id) [\(.remaining_hours//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to_name//\"\"): \(.json_description.tags//\"\") \\\"\(.subject)\\\"\""
+      jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"\""
     fi
   fi
 }
@@ -77,8 +79,7 @@ if [ "$#" -ge 1 ]; then
   if [ "$1" = "lines" ]; then
     shift
     load_json_content_of_ids
-    ALL_TASKS_JSON="$(echo "$ALL_TASKS_JSON" |\
-    jq -c '. | sort_by(.status_id) | reverse' )"
+    #ALL_TASKS_JSON="$(echo "$ALL_TASKS_JSON" | jq -c '. | sort_by(.status_id) | reverse' )"
     TASK_JSON_LINES="$(echo "$ALL_TASKS_JSON" | jq -c '.[]')"
 
     OLD_IFS="$IFS"
@@ -89,6 +90,7 @@ if [ "$#" -ge 1 ]; then
 
     for TASK_JSON in "${TASK_JSONS[@]}"; do
       json_line_print "$TASK_JSON" "" "print_command_details"
+      #json_line_print "$TASK_JSON" "" "print_command"
     done
 
   elif [ "$1" = "pretty" ]; then
