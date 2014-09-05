@@ -50,6 +50,12 @@ if [ -f ~/.redmine ]; then
   source ~/.redmine
 fi
 
+if [ -f $SCRIPT_PATH/.redmine ]; then
+  assert_permissions $SCRIPT_PATH/.redmine
+  #assert_statements $SCRIPT_PATH/.redmine
+  source $SCRIPT_PATH/.redmine
+fi
+
 if [ -f .redmine ]; then
   assert_permissions .redmine
   #assert_statements .redmine
