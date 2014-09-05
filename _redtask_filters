@@ -101,7 +101,11 @@ if [ "$#" -ge 1 ]; then
     VARIABLE_NAME=$(echo "$1" | sed 's/^F://g')
     shift
     IDS=$(eval $VARIABLE_NAME)
+
+  elif [ $(echo "$1" | grep "L:[a-zA-Z0-9_-]\{1,\}") ]; then
+    VARIABLE_NAME=$(echo "$1" | sed 's/^L://g')
     shift
+    eval $VARIABLE_NAME
 
   fi
 fi
