@@ -85,51 +85,52 @@ function load_json_content_of_ids() {
   fi
 }
 
-if [ "$#" -ge 1 ]; then
-  if [ $(echo "$1" | grep "^[0-9]*\(,[0-9]*\)*$") ]; then
-    IDS=$(echo "$1" | tr ',' '\n')
-    shift
+while true;do
+  if [ "$#" -ge 1 ]; then
+    if [ $(echo "$1" | grep "^[0-9]*\(,[0-9]*\)*$") ]; then
+      IDS=$(echo "$1" | tr ',' '\n')
+      shift
 
-  elif [ $(echo "$1" | grep "ids:[a-zA-Z0-9_-]\{1,\}") ]; then
-    VARIABLE_NAME=$(echo "$1" | sed 's/^ids://g')
-    shift
-    IDS="$(eval $VARIABLE_NAME)"
+    elif [ $(echo "$1" | grep "ids:[a-zA-Z0-9_-]\{1,\}") ]; then
+      VARIABLE_NAME=$(echo "$1" | sed 's/^ids://g')
+      shift
+      IDS="$(eval $VARIABLE_NAME)"
 
-  elif [ $(echo "$1" | grep "json:[a-zA-Z0-9_-]\{1,\}") ]; then
-    VARIABLE_NAME=$(echo "$1" | sed 's/^json://g')
-    shift
-    ALL_TASKS_JSON="$(eval $VARIABLE_NAME)"
+    elif [ $(echo "$1" | grep "json:[a-zA-Z0-9_-]\{1,\}") ]; then
+      VARIABLE_NAME=$(echo "$1" | sed 's/^json://g')
+      shift
+      ALL_TASKS_JSON="$(eval $VARIABLE_NAME)"
 
+    elif [ "$1" = "test_filter" ]; then
+      shift
+      load_json_content_of_ids
+      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[]| select(.story_points<=0.5)]' )
+
+    elif [ "$1" = "open" ]; then
+      shift
+      load_json_content_of_ids
+      #TODO: run filter on all child issues
+      #echo '{"a":44,"b":[{"a":1},{"a":2},{"a":3}]}' | jq -c '.b= (.b | del(.[] | select(.a<2)) )'
+      #echo '[{"a":44,"b":[{"a":1},{"a":2},{"a":3}]},{"a":55,"b":[{"a":99}]}]' | jq -c '[.[] | .b= (.b | del(.[] | select(.a<2)) )]'
+      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | .children=(.children | del(.[] | select(.status_id == 5 or .status_id == 6)) )]')
+
+    elif [ "$1" = "hirachy" ]; then
+      shift
+      NO_PARENT="$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | select(has("parent")|not)]')"
+      WITH_PARENT="$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | select(has("parent"))]')"
+      IDS_WITH_PARENT="$(echo "$WITH_PARENT" | jq '.[]|.id')"
+      for ID in $IDS_WITH_PARENT; do
+        JSON="$(echo "$WITH_PARENT" | jq -r ".[]| select(.id==$ID)")"
+        PARENT="$(echo "$JSON" | jq '.parent.id')"
+        NO_PARENT="$(echo "$NO_PARENT" | jq -c "[.[] | if .id==$PARENT then .children+=[$JSON] else . end]")"
+      done
+      ALL_TASKS_JSON="$NO_PARENT"
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+
+    else
+      break
+    fi
+  else
+    break
   fi
-fi
-
-if [ "$#" -ge 1 ]; then
-  if [ "$1" = "test_filter" ]; then
-    shift
-    load_json_content_of_ids
-    ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[]| select(.story_points<=0.5)]' )
-
-  elif [ "$1" = "open" ]; then
-    shift
-    load_json_content_of_ids
-    #TODO: run filter on all child issues
-    #echo '{"a":44,"b":[{"a":1},{"a":2},{"a":3}]}' | jq -c '.b= (.b | del(.[] | select(.a<2)) )'
-    #echo '[{"a":44,"b":[{"a":1},{"a":2},{"a":3}]},{"a":55,"b":[{"a":99}]}]' | jq -c '[.[] | .b= (.b | del(.[] | select(.a<2)) )]'
-    ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | .children=(.children | del(.[] | select(.status_id == 5 or .status_id == 6)) )]')
-
-  elif [ "$1" = "hirachy" ]; then
-    shift
-    NO_PARENT="$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | select(has("parent")|not)]')"
-    WITH_PARENT="$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | select(has("parent"))]')"
-    IDS_WITH_PARENT="$(echo "$WITH_PARENT" | jq '.[]|.id')"
-    for ID in $IDS_WITH_PARENT; do
-      JSON="$(echo "$WITH_PARENT" | jq -r ".[]| select(.id==$ID)")"
-      PARENT="$(echo "$JSON" | jq '.parent.id')"
-      NO_PARENT="$(echo "$NO_PARENT" | jq -c "[.[] | if .id==$PARENT then .children+=[$JSON] else . end]")"
-    done
-    ALL_TASKS_JSON="$NO_PARENT"
-    IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
-
-  fi
-fi
-
+done
