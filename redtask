@@ -2,6 +2,8 @@
 
 SCRIPT_PATH=$(dirname $0)
 
+source $SCRIPT_PATH/_redtask_helpers
+
 source $SCRIPT_PATH/_redmine_api_config_file
 source $SCRIPT_PATH/_redtask_options
 
