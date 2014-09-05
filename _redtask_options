@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PARSED_OPTIONS=""
-while getopts "p:s:eac:o:" options; do
+while getopts "o:c:p:a" options; do
   PARSED_OPTIONS="${PARSED_OPTIONS} -${options}${OPTARG}"
   case $options in
     o )
@@ -12,12 +12,6 @@ while getopts "p:s:eac:o:" options; do
         ;;
     p )
         PROJECT_ID=$OPTARG
-        ;;
-    s )
-        SPACES=$OPTARG
-        ;;
-    e )
-        EXTENDED=1
         ;;
     a )
         APPEND=1
