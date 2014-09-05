@@ -25,3 +25,9 @@ function json_lines_to_json_array() {
 function ids_from_json_array() {
   echo "$(echo "$1" | jq '.[]|.id')"
 }
+
+#function load_json_content_for_ids
+#function parse_custom_json_field
+#function load_json_content_of_children
+
+
