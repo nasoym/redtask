@@ -5,21 +5,21 @@ function assert_json() {
 }
 
 function json_lines_to_json_array() {
-    local JSON_LINES="$1"
-    local IFS=$'\n'
-    local LINES_ARRAY=(${JSON_LINES})
-    local JSON_ARRAY="["
-    local FIRST_ELEMENT=1
-    for JSON in "${LINES_ARRAY[@]}"; do
-      if [ "$FIRST_ELEMENT" -eq 1 ];then
-        FIRST_ELEMENT=0
-        JSON_ARRAY="${JSON_ARRAY}${JSON}"
-      else
-        JSON_ARRAY="${JSON_ARRAY},${JSON}"
-      fi
-    done
-    local JSON_ARRAY="$JSON_ARRAY]"
-    echo "$JSON_ARRAY"
+  local JSON_LINES="$1"
+  local IFS=$'\n'
+  local LINES_ARRAY=(${JSON_LINES})
+  local JSON_ARRAY="["
+  local FIRST_ELEMENT=1
+  for JSON in "${LINES_ARRAY[@]}"; do
+    if [ "$FIRST_ELEMENT" -eq 1 ];then
+      FIRST_ELEMENT=0
+      JSON_ARRAY="${JSON_ARRAY}${JSON}"
+    else
+      JSON_ARRAY="${JSON_ARRAY},${JSON}"
+    fi
+  done
+  local JSON_ARRAY="$JSON_ARRAY]"
+  echo "$JSON_ARRAY"
 }
 
 function write_issue() {
