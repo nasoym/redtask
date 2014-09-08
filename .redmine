@@ -17,6 +17,10 @@ function current_ids() {
   jq '.issues[] | .id'
 }
 
+function fixture_1() {
+  cat $SCRIPT_PATH/fixture_01.json | tr -d '\n'
+}
+
 function current() {
   local SPRINT_ID=$(current_sprint_id)
   json_lines_to_json_array \
