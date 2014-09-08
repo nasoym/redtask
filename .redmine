@@ -17,8 +17,12 @@ function current_ids() {
   jq '.issues[] | .id'
 }
 
-function fixture_1() {
+function fixture_01() {
   cat $SCRIPT_PATH/fixture_01.json | tr -d '\n'
+}
+
+function fixture_02() {
+  cat $SCRIPT_PATH/fixture_02.json | tr -d '\n'
 }
 
 function current() {
