@@ -94,17 +94,19 @@ while true;do
     elif [ $(echo "$1" | grep "ids:[a-zA-Z0-9_-]\{1,\}") ]; then
       VARIABLE_NAME=$(echo "$1" | sed 's/^ids://g')
       shift
+      #TODO: how to append to existing id list
       IDS="$(eval $VARIABLE_NAME)"
 
     elif [ $(echo "$1" | grep "json:[a-zA-Z0-9_-]\{1,\}") ]; then
       VARIABLE_NAME=$(echo "$1" | sed 's/^json://g')
       shift
+      #TODO: how to append exisiting json
       ALL_TASKS_JSON="$(eval $VARIABLE_NAME)"
 
     elif [ "$1" = "test_filter" ]; then
       shift
       load_json_content_of_ids
-      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[]| select(.story_points<=0.5)]' )
+      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[]| select(.story_points>2.5)]' )
 
     elif [ "$1" = "open" ]; then
       shift
@@ -117,10 +119,14 @@ while true;do
     elif [ $(echo "$1" | grep "\<assigned:[a-zA-Z0-9_-]*\>") ]; then
       USER_ID=$(echo "$1" | sed 's/^assigned://g')
       shift
+      #TODO: how to provide a list of assignees
       ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.assigned_to.id==$USER_ID)]" )
 
     elif [ "$1" = "hirachy" ]; then
       shift
+      #TODO: what to do with issues whos parent is not in the json structure
+      #TODO: what to do with grandchildren
+      #TODO: what to do when the children structure is already filled in the minimal form
       NO_PARENT="$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | select(has("parent")|not)]')"
       WITH_PARENT="$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | select(has("parent"))]')"
       IDS_WITH_PARENT="$(echo "$WITH_PARENT" | jq '.[]|.id')"

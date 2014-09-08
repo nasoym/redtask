@@ -56,10 +56,12 @@ function ids_from_json_array() {
   echo "$(echo "$1" | jq '.[]|.id')"
 }
 
+#TODO:
 function load_json_content_for_ids() {
   :
 }
 
+#TODO:
 function parse_custom_json_field() {
   :
 #  TASK_JSON="$(echo "$TASK_JSON" | jq -c '.[]')"
@@ -74,6 +76,7 @@ function parse_custom_json_field() {
 #  echo "$TASK_JSON"
 }
 
+#TODO:
 function load_json_content_of_children() {
   :
 }
