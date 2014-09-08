@@ -102,6 +102,7 @@ while true;do
       shift
       #TODO: how to append exisiting json
       ALL_TASKS_JSON="$(eval $VARIABLE_NAME)"
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
 
     elif [ "$1" = "test_filter" ]; then
       shift
@@ -121,6 +122,10 @@ while true;do
       shift
       #TODO: how to provide a list of assignees
       ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.assigned_to.id==$USER_ID)]" )
+
+    elif [ "$1" = "custom" ]; then
+      shift
+      ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
 
     elif [ "$1" = "hirachy" ]; then
       shift

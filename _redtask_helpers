@@ -61,19 +61,19 @@ function load_json_content_for_ids() {
   :
 }
 
-#TODO:
 function parse_custom_json_field() {
-  :
-#  TASK_JSON="$(echo "$TASK_JSON" | jq -c '.[]')"
-#  #echo "OLD TASK_JSON: >$TASK_JSON<" 1>&2
-#  DESCRIPTION="$(echo "$TASK_JSON" | jq -r '.description')"
-#  #echo "DESCRIPTION:>$DESCRIPTION<" 1>&2
-#  if [ -n "$DESCRIPTION" ] && [ $(assert_json "$DESCRIPTION") ]; then
-#    #echo "DESCRIPTION IS JSON" 1>&2
-#    TASK_JSON=$(echo "$TASK_JSON" | jq -c ".json_description=$DESCRIPTION")
-#    #echo "NEW TASK_JSON: >$TASK_JSON<" 1>&2
-#  fi
-#  echo "$TASK_JSON"
+  local JSON_CONTENT="$1"
+  local CONTENT_IDS="$2"
+  for ID in $CONTENT_IDS; do
+    local DESCRIPTION=$(echo "$JSON_CONTENT" | jq -r -c ".[]| select(.id==$ID) |.description")
+    if [ -n "$DESCRIPTION" ] && [ $(assert_json "$DESCRIPTION") ]; then
+      #echo "DESCRIPTION IS JSON" 1>&2
+      local JSON_CONTENT=$(echo "$JSON_CONTENT" |\
+        jq -c "[.[] | if .id==$ID then .cjson=$DESCRIPTION else . end]"\
+        )
+    fi
+  done
+  echo "$JSON_CONTENT" 
 }
 
 #TODO:
