@@ -23,7 +23,7 @@
 function print_command() {
   local JSON="$1"
   echo "$JSON" |\
-  jq -r "\"\(.id) \(.subject)\""
+  jq -r "\"\(.id) \(.subject) \(.cjson.tags//\"\") \""
   #jq -r "\"\(.id) \(.subject) \(.status_name//\"\")\""
 }
 
@@ -41,11 +41,11 @@ function print_command_details() {
     if [ "$STATUS_IN_WORK" -eq 1 ]; then
       tput setaf 3
       echo "$JSON" |\
-      jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"\""
+      jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"    \(.cjson.tags//\"\") \""
       tput sgr0
     else
       echo "$JSON" |\
-      jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"\""
+      jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"    \(.cjson.tags//\"\")  \""
     fi
   fi
 }
