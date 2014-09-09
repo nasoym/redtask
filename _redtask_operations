@@ -38,27 +38,39 @@ if [ "$#" -ge 1 ]; then
     for ID in $IDS; do
       curl -X DELETE -s -3 "https://$SERVER/issues/$ID.json?key=$KEY"
     done
+
+  elif [ $(echo "$1" | grep "\<estimate:[0-9]*\>") ]; then
+    ESTIMATED_HOURS=$(echo "$1" | sed 's/^estimate://g')
+    shift
+    for ID in $IDS; do
+      write_issue $ID "'estimated_hours':$ESTIMATED_HOURS"
+    done
+
+  elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
+    OWNER=$(echo "$1" | sed 's/^assign://g')
+    shift
+    for ID in $IDS; do
+      write_issue $ID "'assigned_to_id':$OWNER"
+    done
+
+  elif [ $(echo "$1" | grep "\<assign:[a-zA-Z0-9_-]*\>") ]; then
+    USER_STRING="$(echo "$1" | sed 's/^assign://g')"
+    shift
+    MATCHING_USER_ID="$(project_member_by_name $USER_STRING)"
+    if [ -n "$MATCHING_USER_ID" ];then
+      for ID in $IDS; do
+        write_issue $ID "'assigned_to_id':$MATCHING_USER_ID"
+      done
+    else
+      echo "no or more than one user with:'$USER_STRING' was found." 1>&2
+    fi
+
   fi
 
   if [ "$#" -ge 2 ]; then
 
-    if [ "$1" = "assign" ]; then
-      OWNER="$2"
-      shift
-      shift
-      for ID in $IDS; do
-        write_issue $ID "'assigned_to_id':$OWNER"
-      done
 
-    elif [ "$1" = "estimate" ]; then
-      ESTIMATED_HOURS="$2"
-      shift
-      shift
-      for ID in $IDS; do
-        write_issue $ID "'estimated_hours':$ESTIMATED_HOURS"
-      done
-
-    elif [ "$1" = "parent" ]; then
+    if [ "$1" = "parent" ]; then
       PARENT="$2"
       shift
       shift
