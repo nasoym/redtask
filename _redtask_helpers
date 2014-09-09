@@ -56,6 +56,26 @@ function ids_from_json_array() {
   echo "$(echo "$1" | jq '.[]|.id')"
 }
 
+function project_members() {
+  curl -s -3 "https://$SERVER/projects/$PROJECT_ID/memberships.json?key=$KEY" |\
+  jq -c '.memberships'
+  #jq -r '(.memberships[] | .user | "\(.name) : \(.id)")'
+}
+
+function project_member_by_name() {
+  local USER_NAME_STRING="$1"
+  local ALL_MEMBERS_JSON="$(project_members | tr '[:upper:]' '[:lower:]')"
+  local MATCHING_USER_IDS="$(echo "$ALL_MEMBERS_JSON" | jq "[.[] | select(.user.name | contains(\"$USER_NAME_STRING\")) | .user.id]")"
+  local MATCHING_USER_IDS_COUNT="$(echo "$MATCHING_USER_IDS" | jq 'length')"
+  if [ "$MATCHING_USER_IDS_COUNT" -eq 1 ];then
+    local MATCHING_USER_ID="$(echo "$MATCHING_USER_IDS" | jq '.[]')"
+    echo "$MATCHING_USER_ID"
+  else
+    echo
+  fi
+}
+
+
 #TODO:
 function load_json_content_for_ids() {
   :
