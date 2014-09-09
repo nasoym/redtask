@@ -97,6 +97,11 @@ while true;do
       #TODO: how to append to existing id list
       IDS="$(eval $VARIABLE_NAME)"
 
+    elif [ $(echo "$1" | grep "json:stdin") ]; then
+      shift
+      ALL_TASKS_JSON="$(cat)"
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+
     elif [ $(echo "$1" | grep "json:[a-zA-Z0-9_-]\{1,\}") ]; then
       VARIABLE_NAME=$(echo "$1" | sed 's/^json://g')
       shift
