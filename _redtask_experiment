@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ "$#" -ge 1 ]; then
+
+  if [ "$1" = "test_01" ]; then
+    RESULT="$(project_member_by_name $2)"
+    shift 2
+    if [ -n "$RESULT" ];then
+      echo "found user: $RESULT"
+    else
+      echo "no or too many users found"
+    fi
+  fi
+
+fi

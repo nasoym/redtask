@@ -25,4 +25,5 @@ IDS=""
 source $SCRIPT_PATH/_redtask_filters
 source $SCRIPT_PATH/_redtask_operations
 source $SCRIPT_PATH/_redtask_print
+source $SCRIPT_PATH/_redtask_experiment
 
