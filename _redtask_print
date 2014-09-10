@@ -23,7 +23,8 @@
 function print_command() {
   local JSON="$1"
   echo "$JSON" |\
-  jq -r "\"\(.id) \(.subject) \(.cjson.tags//\"\") \""
+  jq -r "\"\(.id) \(.subject) \(.cjson.tags//\"\") \"" |\
+  sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
   #jq -r "\"\(.id) \(.subject) \(.status_name//\"\")\""
 }
 
@@ -34,18 +35,21 @@ function print_command_details() {
   if [ "$FEATURE" -eq 1 ]; then
     tput setaf 5
     echo "$JSON" |\
-    jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.story_points//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"\""
+    jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.story_points//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"\"" |\
+    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
     tput sgr0
   else
     local STATUS_IN_WORK=$(echo "$JSON" | jq -r 'if .status.id == 2 then 1 else 0 end')
     if [ "$STATUS_IN_WORK" -eq 1 ]; then
       tput setaf 3
       echo "$JSON" |\
-      jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"    \(.cjson.tags//\"\") \""
+      jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"    \(.cjson.tags//\"\") \"" |\
+      sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
       tput sgr0
     else
       echo "$JSON" |\
-      jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"    \(.cjson.tags//\"\")  \""
+      jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"    \(.cjson.tags//\"\")  \"" |\
+      sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
     fi
   fi
 }
