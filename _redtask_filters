@@ -1,45 +1,10 @@
 #!/bin/bash
 
 function issue() {
-  ISSUE_ID=$1
-  REDMINE_ISSUE=$(curl -s -3 "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}&include=journals,children")
-  REDMINE_SINGLE_ISSUE=$(echo $REDMINE_ISSUE | jq '.issue')
-  TASK_JSON=$(echo $REDMINE_SINGLE_ISSUE |\
-    jq -c "[if type == \"array\" then .[] else . end | {\
-      id: .id, \
-      subject: .subject,\
-      description: .description,\
-      json_description: null,\
-      story_points: .story_points,\
-      status_name: .status.name, \
-      status_id: .status.id, \
-      tracker_id: .tracker.id, \
-      tracker_name: .tracker.name, \
-      fixed_version_id: .fixed_version.id, \
-      fixed_version_name: .fixed_version.name, \
-      assigned_to_name: .assigned_to.name, \
-      assigned_to_id: .assigned_to.id, \
-      parent_id: .parent.id, \
-      estimated_hours: .estimated_hours, \
-      spent_hours: .spent_hours, \
-      remaining_hours: ( if has(\"journals\") then \
-        ([.journals[] | select( has(\"details\") and ( .details[] | select(.name == \"remaining_hours\") )) | .details[] | select( .name==\"remaining_hours\")] | .[length-1] | if has(\"new_value\") then .new_value | tonumber else null end) \
-        else null end ),\
-      notes: ( if has(\"journals\") then \
-        ([.journals[] | select( has(\"notes\") and .notes !=\"\" ) | {notes: .notes, user_id: .user.id, user_name: .user.name , created_on: .created_on}]) \
-        else [] end ),\
-      children: (if has(\"children\") then [.children[] | { id: .id, subject: .subject}] else [] end)\
-    }]")
-  TASK_JSON="$(echo "$TASK_JSON" | jq -c '.[]')"
-  #echo "OLD TASK_JSON: >$TASK_JSON<" 1>&2
-  DESCRIPTION="$(echo "$TASK_JSON" | jq -r '.description')"
-  #echo "DESCRIPTION:>$DESCRIPTION<" 1>&2
-  if [ -n "$DESCRIPTION" ] && [ $(assert_json "$DESCRIPTION") ]; then
-    #echo "DESCRIPTION IS JSON" 1>&2
-    TASK_JSON=$(echo "$TASK_JSON" | jq -c ".json_description=$DESCRIPTION")
-    #echo "NEW TASK_JSON: >$TASK_JSON<" 1>&2
-  fi
-  echo "$TASK_JSON"
+  local ISSUE_ID=$1
+  local REDMINE_ISSUE=$(curl -s -3 "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}&include=journals,children")
+  local REDMINE_SINGLE_ISSUE=$(echo $REDMINE_ISSUE | jq -c '.issue')
+  echo "$REDMINE_SINGLE_ISSUE"
 }
 
 function load_json_of_ids() {
