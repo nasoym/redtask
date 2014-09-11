@@ -1,82 +1,81 @@
 #!/bin/bash
 
-if [ "$#" -ge 1 ]; then
-  if [ "$1" = "append" ]; then
-    shift
-    APPEND=1
-  fi
-fi
+MODIFIER=""
+MODIFICATION_VALUES=()
 
-if [ "$#" -ge 1 ]; then
+while true;do
+  if [ "$#" -ge 1 ]; then
 
-  if [ "$1" = "done" ]; then
-    shift
-    for ID in $IDS; do
-      write_issue $ID "'status_id':'5'"
-    done
-
-  elif [ "$1" = "rejected" ]; then
-    shift
-    for ID in $IDS; do
-      write_issue $ID "'status_id':'6'"
-    done
-
-  elif [ "$1" = "blocked" ]; then
-    shift
-    for ID in $IDS; do
-      write_issue $ID "'status_id':'4'"
-    done
-
-  elif [ "$1" = "doing" ]; then
-    shift
-    for ID in $IDS; do
-      write_issue $ID "'status_id':'2'"
-    done
-
-  elif [ "$1" = "delete" ]; then
-    shift
-    for ID in $IDS; do
-      curl -X DELETE -s -3 "https://$SERVER/issues/$ID.json?key=$KEY"
-    done
-
-  elif [ $(echo "$1" | grep "\<estimate:[0-9]*\>") ]; then
-    ESTIMATED_HOURS=$(echo "$1" | sed 's/^estimate://g')
-    shift
-    for ID in $IDS; do
-      write_issue $ID "'estimated_hours':$ESTIMATED_HOURS"
-    done
-
-  elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
-    OWNER=$(echo "$1" | sed 's/^assign://g')
-    shift
-    for ID in $IDS; do
-      write_issue $ID "'assigned_to_id':$OWNER"
-    done
-
-  elif [ $(echo "$1" | grep "\<assign:[a-zA-Z0-9_-]*\>") ]; then
-    USER_STRING="$(echo "$1" | sed 's/^assign://g')"
-    shift
-    MATCHING_USER_ID="$(project_member_by_name $USER_STRING)"
-    if [ -n "$MATCHING_USER_ID" ];then
-      for ID in $IDS; do
-        write_issue $ID "'assigned_to_id':$MATCHING_USER_ID"
-      done
-    else
-      echo "no or more than one user with:'$USER_STRING' was found." 1>&2
-    fi
-
-  fi
-
-  if [ "$#" -ge 2 ]; then
-
-
-    if [ "$1" = "parent" ]; then
-      PARENT="$2"
+    if [ "$1" = "append" ]; then
       shift
+      APPEND=1
+
+    elif [ "$1" = "done" ]; then
       shift
       for ID in $IDS; do
-        write_issue $ID "'parent_issue_id':$PARENT"
+        write_issue $ID "'status_id':'5'"
       done
+
+    elif [ "$1" = "rejected" ]; then
+      shift
+      for ID in $IDS; do
+        write_issue $ID "'status_id':'6'"
+      done
+
+    elif [ "$1" = "blocked" ]; then
+      shift
+      for ID in $IDS; do
+        write_issue $ID "'status_id':'4'"
+      done
+
+    elif [ "$1" = "doing" ]; then
+      shift
+      for ID in $IDS; do
+        write_issue $ID "'status_id':'2'"
+      done
+
+    elif [ "$1" = "delete" ]; then
+      shift
+      for ID in $IDS; do
+        curl -X DELETE -s -3 "https://$SERVER/issues/$ID.json?key=$KEY"
+      done
+
+    elif [ $(echo "$1" | grep "\<estimate:[0-9]*\>") ]; then
+      ESTIMATED_HOURS=$(echo "$1" | sed 's/^estimate://g')
+      shift
+      MODIFICATION_VALUES+=("'estimated_hours':$ESTIMATED_HOURS")
+#      for ID in $IDS; do
+#        write_issue $ID "'estimated_hours':$ESTIMATED_HOURS"
+#      done
+
+    elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
+      OWNER=$(echo "$1" | sed 's/^assign://g')
+      shift
+      MODIFICATION_VALUES+=("'assigned_to_id':$OWNER")
+#      for ID in $IDS; do
+#        write_issue $ID "'assigned_to_id':$OWNER"
+#      done
+
+    elif [ $(echo "$1" | grep "\<assign:[a-zA-Z0-9_-]*\>") ]; then
+      USER_STRING="$(echo "$1" | sed 's/^assign://g')"
+      shift
+      MATCHING_USER_ID="$(project_member_by_name $USER_STRING)"
+      if [ -n "$MATCHING_USER_ID" ];then
+        MODIFICATION_VALUES+=("'assigned_to_id':$MATCHING_USER_ID")
+#        for ID in $IDS; do
+#          write_issue $ID "'assigned_to_id':$MATCHING_USER_ID"
+#        done
+      else
+        echo "no or more than one user with:'$USER_STRING' was found." 1>&2
+      fi
+
+    elif [ $(echo "$1" | grep "\<parent:[0-9]*\>") ]; then
+      PARENT="$(echo "$1" | sed 's/^parent://g')"
+      shift
+      MODIFICATION_VALUES+=("'parent_issue_id':$PARENT")
+#      for ID in $IDS; do
+#        write_issue $ID "'parent_issue_id':$PARENT"
+#      done
 
     elif [ "$1" = "key" ] && [ "$#" -ge 3 ]; then
       KEY_NAME="$2"
@@ -96,7 +95,7 @@ if [ "$#" -ge 1 ]; then
         write_issue $ID "'$KEY_NAME':'$NEW_VALUE'"
       done
 
-    elif [ "$1" = "cjson" ]; then
+    elif [ "$1" = "cjson" ] && [ "$#" -ge 2 ]; then
       VALUE_ARGUMENT="$2"
       shift
       shift
@@ -112,7 +111,7 @@ if [ "$#" -ge 1 ]; then
         modify_custom_json "$ID" "$JSON" "$VALUE_ARGUMENT"
       done
 
-    elif [ "$1" = "json" ]; then
+    elif [ "$1" = "json" ] && [ "$#" -ge 2 ]; then
       VALUE_ARGUMENT="$2"
       shift
       shift
@@ -140,56 +139,81 @@ if [ "$#" -ge 1 ]; then
         fi
       done
 
-    elif [ "$1" = "add_feature" ]; then
-      SUBJECT="$2"
+    elif [ "$1" = "mo" ]; then
       shift
-      shift
-      if [ -z "$IDS" ];then
-        KEY_VALUES=""
-        if [ -n "$ASSIGN_TO_OWNER" ]; then
-          KEY_VALUES=",'assigned_to_id':$ASSIGN_TO_OWNER"
-        fi
-        echo "'subject':'$SUBJECT'$KEY_VALUES" |\
-        sed -e "s/$/,'project_id':$PROJECT_ID/g" |\
-        sed -e "s/$/,'tracker_id':2/g" |\
-        sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
-        curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
-        jq '.issue.id'
+      MODIFIER="mo"
 
+    elif [ "$(echo "$1" | grep "\<add_feature:.*")" ]; then
+      SUBJECT_STRING="$(echo "$1" | sed -e 's/^add_feature://g')"
+      shift
+      MODIFIER="add"
+      MODIFICATION_VALUES+=("'subject':'$SUBJECT_STRING'")
+      MODIFICATION_VALUES+=("'project_id':$PROJECT_ID")
+      MODIFICATION_VALUES+=("'tracker_id':2")
+      if [ -n "$IDS" ] && [ "$(wc -l <<<"$IDS")" -eq 1 ];then
+        MODIFICATION_VALUES+=("'parent_issue_id':$IDS")
+      elif [ -n "$IDS" ];then
+        echo "cannot create task for many parents!" 1>&2
+        MODIFIER=""
       fi
 
-    elif [ "$1" = "add_task" ]; then
-      SUBJECT="$2"
+    elif [ "$(echo "$1" | grep "\<\(add_task\|add\):.*")" ]; then
+      #SUBJECT_STRING="$(echo "$1" | sed -e 's/^add_task://g')"
+      SUBJECT_STRING="$(echo "$1" | sed -e 's/^add://g' -e 's/^add_task://g')"
       shift
-      shift
-      if [ -z "$IDS" ];then
-        KEY_VALUES=""
-        if [ -n "$ASSIGN_TO_OWNER" ]; then
-          KEY_VALUES=",'assigned_to_id':$ASSIGN_TO_OWNER"
-        fi
-        echo "'subject':'$SUBJECT'$KEY_VALUES" |\
-        sed -e "s/$/,'project_id':$PROJECT_ID/g" |\
-        sed -e "s/$/,'tracker_id':4/g" |\
-        sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
-        curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
-        jq '.issue.id'
-      else
-        for ID in $IDS; do
-          KEY_VALUES=""
-          if [ -n "$ASSIGN_TO_OWNER" ]; then
-            KEY_VALUES=",'assigned_to_id':$ASSIGN_TO_OWNER"
-          fi
-          echo "'subject':'$SUBJECT'$KEY_VALUES" |\
-          sed -e "s/$/,'project_id':$PROJECT_ID/g" |\
-          sed -e "s/$/,'parent_issue_id':$ID/g" |\
-          sed -e "s/$/,'tracker_id':4/g" |\
-          sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
-          curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
-          jq '.issue.id'
-        done
+      MODIFIER="add"
+      MODIFICATION_VALUES+=("'subject':'$SUBJECT_STRING'")
+      MODIFICATION_VALUES+=("'project_id':$PROJECT_ID")
+      MODIFICATION_VALUES+=("'tracker_id':4")
+      if [ -n "$IDS" ] && [ "$(wc -l <<<"$IDS")" -eq 1 ];then
+        MODIFICATION_VALUES+=("'parent_issue_id':$IDS")
+      elif [ -n "$IDS" ];then
+        echo "cannot create task for many parents!" 1>&2
+        MODIFIER=""
       fi
+
+    else
+      break
     fi
-
+  else
+    break
   fi
+done
 
-fi
+
+FIRST_ELEMENT=true
+FINAL_MODIFICATION_STRING=""
+for I in "${MODIFICATION_VALUES[@]}"
+do
+  if [ "$FIRST_ELEMENT" = true ]; then
+    FIRST_ELEMENT=false
+    FINAL_MODIFICATION_STRING="$I"
+  else
+    FINAL_MODIFICATION_STRING="$FINAL_MODIFICATION_STRING,$I"
+  fi
+done
+
+case "$MODIFIER" in
+  "" | "nop")
+    #echo "NOP modifier" 1>&2
+    ;;
+
+  "mo")
+    #echo "$FINAL_MODIFICATION_STRING"
+    for ID in $IDS; do
+      write_issue $ID "$FINAL_MODIFICATION_STRING"
+    done
+    ;;
+
+  "add")
+    #echo "ADD !!!! modifier" 1>&2
+    echo "$FINAL_MODIFICATION_STRING" |\
+    sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
+    curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
+    jq '.issue.id'
+    ;;
+
+  *)
+    ;;
+esac
+
