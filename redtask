@@ -1,6 +1,10 @@
 #!/bin/bash
 
-SCRIPT_PATH=$(dirname $0)
+if [ -L "$0" ];then
+  SCRIPT_PATH="$(dirname $(readlink $0))"
+else
+  SCRIPT_PATH="$(dirname $0)"
+fi
 
 source $SCRIPT_PATH/_redtask_helpers
 
