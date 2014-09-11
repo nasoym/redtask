@@ -132,7 +132,8 @@ while true;do
       shift
       ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
 
-    elif [ "$1" = "hirachy" ]; then
+    #elif [ "$1" = "hierarchy" ]; then
+    elif [[ $1 =~ ^hier($|(a$|ar$|arc$|arch$|archy$)) ]] || [ "$1" = "hrchy" ]; then
       shift
       #TODO: what to do with issues whos parent is not in the json structure
       #TODO: what to do with grandchildren
