@@ -22,20 +22,22 @@
 
 function print_command() {
   local JSON="$1"
+  local LEADING_SPACES="$2"
   echo "$JSON" |\
-  jq -r "\"\(.id) \(.subject) \(.cjson.tags//\"\") \"" |\
+  jq -r "\"$LEADING_SPACES\(.id) \(.subject) \(.cjson.tags//\"\") \"" |\
   sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
   #jq -r "\"\(.id) \(.subject) \(.status_name//\"\")\""
 }
 
 function print_command_details() {
   local JSON="$1"
+  local LEADING_SPACES="$2"
   #local FEATURE=$(echo "$JSON" | jq -r 'if .tracker_name == "Feature" then 1 else 0 end')
   local FEATURE=$(echo "$JSON" | jq -r 'if .tracker.id == 2 then 1 else 0 end')
   if [ "$FEATURE" -eq 1 ]; then
     tput setaf 5
     echo "$JSON" |\
-    jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.story_points//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"\"" |\
+    jq -r "\"$LEADING_SPACES\(.id) [\(.done_ratio//\"-\")%:\(.story_points//\"-\")p] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"\"" |\
     sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
     tput sgr0
   else
@@ -43,12 +45,12 @@ function print_command_details() {
     if [ "$STATUS_IN_WORK" -eq 1 ]; then
       tput setaf 3
       echo "$JSON" |\
-      jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"    \(.cjson.tags//\"\") \"" |\
+      jq -r "\"$LEADING_SPACES\(.id) [\(.done_ratio//\"-\")%:\(.estimated_hours//\"-\")h] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"    \(.cjson.tags//\"\") \"" |\
       sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
       tput sgr0
     else
       echo "$JSON" |\
-      jq -r "\"\(.id) [\(.done_ratio//\"-\"):\(.estimated_hours//\"-\")] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"    \(.cjson.tags//\"\")  \"" |\
+      jq -r "\"$LEADING_SPACES\(.id) [\(.done_ratio//\"-\")%:\(.estimated_hours//\"-\")h] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"    \(.cjson.tags//\"\")  \"" |\
       sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
     fi
   fi
@@ -59,11 +61,10 @@ function json_line_print(){
   local LEADING_SPACES="$2"
   local PRINT_COMMAND="$3"
 
-  echo -n "$LEADING_SPACES"
   if [ -n "$PRINT_COMMAND" ]; then
-    $PRINT_COMMAND "$JSON"
+    $PRINT_COMMAND "$JSON" "$LEADING_SPACES"
   else 
-    print_command "$JSON"
+    print_command "$JSON" "$LEADING_SPACES"
   fi
 
   local CHILD_TASKS="$(echo "$JSON" | jq -r -c 'if has("children") then .children[] else "" end')"
