@@ -48,6 +48,11 @@ while true;do
 #        write_issue $ID "'estimated_hours':$ESTIMATED_HOURS"
 #      done
 
+    elif [ $(echo "$1" | grep "\<version:[0-9]*\>") ]; then
+      VERSION=$(echo "$1" | sed 's/^version://g')
+      shift
+      MODIFICATION_VALUES+=("'fixed_version_id':$VERSION")
+
     elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
       OWNER=$(echo "$1" | sed 's/^assign://g')
       shift
