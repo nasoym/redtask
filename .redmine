@@ -10,6 +10,12 @@ function current_user_id() {
   jq '.user.id'
 }
 
+function versions() {
+  curl -s -3 "https://$SERVER/projects/$PROJECT_ID/versions.json?key=$KEY" |\
+  jq -c '.versions[]'
+  #jq -c '.versions[] | {id: .id, name: .name, status: .status, due_date: .due_date}'
+}
+
 function current_ids() {
   local SPRINT_ID=$(current_sprint_id)
   #curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&tracker_id=2&status_id=open&fixed_version_id=$SPRINT_ID" |\
@@ -23,6 +29,13 @@ function fixture_01() {
 
 function fixture_02() {
   cat $SCRIPT_PATH/fixture_02.json | tr -d '\n'
+}
+
+function current_stories() {
+  local SPRINT_ID=$(current_sprint_id)
+  json_lines_to_json_array \
+  "$(curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=$SPRINT_ID&tracker_id=2" |\
+  jq -c '.issues[]')"
 }
 
 function current() {
