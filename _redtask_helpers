@@ -52,6 +52,23 @@ function modify_custom_json() {
   write_issue $ID "'description':'$NEW_VALUE'"
 }
 
+function modifier_string_for_custom_json() {
+  local JSON="$1"
+  local JSON_MODIFICATION="$2"
+  local OLD_VALUE=$(echo "$JSON" | jq -r ".$CUSTOM_JSON_KEY")
+  if [ $(assert_json "$OLD_VALUE") ]; then
+    if [ -z "$OLD_VALUE" ];then
+      local OLD_VALUE="{}"
+    fi
+  else
+    local OLD_VALUE="{}"
+    echo "old description was not a json content!" 1>&2
+  fi
+  local NEW_VALUE=$(echo "$OLD_VALUE" | jq -c "$JSON_MODIFICATION" | sed -e 's/"/\\\"/g')
+  echo "'$CUSTOM_JSON_KEY':'$NEW_VALUE'"
+}
+
+
 function ids_from_json_array() {
   echo "$(echo "$1" | jq '.[]|.id')"
 }
@@ -85,7 +102,7 @@ function parse_custom_json_field() {
   local JSON_CONTENT="$1"
   local CONTENT_IDS="$2"
   for ID in $CONTENT_IDS; do
-    local DESCRIPTION=$(echo "$JSON_CONTENT" | jq -r -c ".[]| select(.id==$ID) |.description")
+    local DESCRIPTION=$(echo "$JSON_CONTENT" | jq -r -c ".[]| select(.id==$ID) |.$CUSTOM_JSON_KEY")
     if [ -n "$DESCRIPTION" ] && [ $(assert_json "$DESCRIPTION") ]; then
       #echo "DESCRIPTION IS JSON" 1>&2
       local JSON_CONTENT=$(echo "$JSON_CONTENT" |\

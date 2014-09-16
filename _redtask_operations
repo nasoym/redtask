@@ -100,20 +100,17 @@ while true;do
         write_issue $ID "'$KEY_NAME':'$NEW_VALUE'"
       done
 
-    elif [ "$1" = "cjson" ] && [ "$#" -ge 2 ]; then
-      VALUE_ARGUMENT="$2"
-      shift
+    elif [ "$(echo "$1" | grep "\<cjson:.*")" ]; then
+      VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^cjson://g')"
       shift
       load_json_content_of_ids
-
       #redtask 3277 cjson '.tags+=["hi"]'
       #redtask 3277 cjson '.+{"c":4}'
       #redtask 3277 cjson '.b=5'
-
       for ID in $IDS
       do
         JSON=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")
-        modify_custom_json "$ID" "$JSON" "$VALUE_ARGUMENT"
+        MODIFICATION_VALUES+=( "$(modifier_string_for_custom_json "$JSON" "$VALUE_ARGUMENT")" )
       done
 
     elif [ "$1" = "json" ] && [ "$#" -ge 2 ]; then
@@ -206,6 +203,7 @@ case "$MODIFIER" in
   "mo")
     #echo "$FINAL_MODIFICATION_STRING"
     for ID in $IDS; do
+      #echo "write modification: >$FINAL_MODIFICATION_STRING<"
       write_issue $ID "$FINAL_MODIFICATION_STRING"
     done
     ;;
