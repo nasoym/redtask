@@ -103,6 +103,7 @@ while true;do
 
     elif [ "$1" = "custom" ]; then
       shift
+      load_json_content_of_ids
       ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
 
     #elif [ "$1" = "hierarchy" ]; then
