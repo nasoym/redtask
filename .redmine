@@ -52,23 +52,3 @@ function backlog() {
   jq -c '.issues[]')"
 }
 
-#function current_user() {
-#  SPRINT_ID=$(current_sprint_id)
-#  USER_ID=$(current_user_id)
-#  curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&tracker_id=2&status_id=open&fixed_version_id=$SPRINT_ID&assigned_to_id=$USER_ID" |\
-#  jq '.issues[] | .id'
-#}
-#
-#function backlog() {
-#  SPRINT_ID=$(current_sprint_id)
-#  curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&tracker_id=2&status_id=open&fixed_version_id=!$SPRINT_ID" |\
-#  jq '.issues[] | .id'
-#}
-#
-#function backlog_user() {
-#  SPRINT_ID=$(current_sprint_id)
-#  curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&tracker_id=2&status_id=open&fixed_version_id=!$SPRINT_ID&assigned_to_id=$USER_ID" |\
-#  jq '.issues[] | .id'
-#}
-#
-#

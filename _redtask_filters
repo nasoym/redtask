@@ -1,55 +1,5 @@
 #!/bin/bash
 
-function issue() {
-  local ISSUE_ID=$1
-  local REDMINE_ISSUE=$(curl -s -3 "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}&include=journals,children")
-  local REDMINE_SINGLE_ISSUE=$(echo $REDMINE_ISSUE | jq -c '.issue')
-  echo "$REDMINE_SINGLE_ISSUE"
-}
-
-function load_json_of_ids() {
-  IDS=$1
-  DEPTH=$2
-  if [ -n "$DEPTH" ];then
-    NEXT_DEPTH=$(( DEPTH - 1 ))
-  else
-    DEPTH=0
-  fi
-  ALL_TASKS_JSON="["
-  FIRST_ELEMENT=true
-  for ID in $IDS
-  do
-    TASK_JSON=$(issue $ID)
-
-      if [ "$DEPTH" -gt 0 ];then
-        CHILD_IDS=$(echo "$TASK_JSON" | jq -r ".children[] | .id")
-        if [ -n "$CHILD_IDS" ];then
-          CHILD_TASKS_JSON="$(load_json_of_ids "$CHILD_IDS" $NEXT_DEPTH)"
-          TASK_JSON=$(echo "$TASK_JSON" | jq -c ".children=$CHILD_TASKS_JSON")
-        fi
-      fi
-
-    if [ "$FIRST_ELEMENT" = true ]; then
-      FIRST_ELEMENT=false
-    else
-      ALL_TASKS_JSON="${ALL_TASKS_JSON},"
-    fi
-    ALL_TASKS_JSON="${ALL_TASKS_JSON}${TASK_JSON}"
-  done
-  ALL_TASKS_JSON="${ALL_TASKS_JSON}]"
-  echo "$ALL_TASKS_JSON"
-}
-
-function load_json_content_of_ids() {
-  if [ -z "$ALL_TASKS_JSON" ] && [ -n "$IDS" ];then
-    echo " load json of ids" 1>&2
-    ALL_TASKS_JSON="$(load_json_of_ids "$IDS" $CHILD_DEPTH)"
-  elif [ -z "$ALL_TASKS_JSON" ] && [ -z "$IDS" ];then
-    echo "no content" 1>&2
-    ALL_TASKS_JSON="[]"
-  fi
-}
-
 while true;do
   if [ "$#" -ge 1 ]; then
     if [ $(echo "$1" | grep "^[0-9]*\(,[0-9]*\)*$") ]; then
@@ -66,6 +16,7 @@ while true;do
       shift
       ALL_TASKS_JSON="$(cat)"
       IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
 
     elif [ $(echo "$1" | grep "json:[a-zA-Z0-9_-]\{1,\}") ]; then
       VARIABLE_NAME=$(echo "$1" | sed 's/^json://g')
@@ -73,6 +24,7 @@ while true;do
       #TODO: how to append exisiting json
       ALL_TASKS_JSON="$(eval $VARIABLE_NAME)"
       IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
 
     elif [ "$1" = "test_filter" ]; then
       shift

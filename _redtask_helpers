@@ -1,5 +1,56 @@
 #!/bin/bash
 
+function issue() {
+  local ISSUE_ID=$1
+  local REDMINE_ISSUE=$(curl -s -3 "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}&include=journals,children")
+  local REDMINE_SINGLE_ISSUE=$(echo $REDMINE_ISSUE | jq -c '.issue')
+  echo "$REDMINE_SINGLE_ISSUE"
+}
+
+function load_json_of_ids() {
+  IDS=$1
+  DEPTH=$2
+  if [ -n "$DEPTH" ];then
+    NEXT_DEPTH=$(( DEPTH - 1 ))
+  else
+    DEPTH=0
+  fi
+  ALL_TASKS_JSON="["
+  FIRST_ELEMENT=true
+  for ID in $IDS
+  do
+    TASK_JSON=$(issue $ID)
+
+      if [ "$DEPTH" -gt 0 ];then
+        CHILD_IDS=$(echo "$TASK_JSON" | jq -r ".children[] | .id")
+        if [ -n "$CHILD_IDS" ];then
+          CHILD_TASKS_JSON="$(load_json_of_ids "$CHILD_IDS" $NEXT_DEPTH)"
+          TASK_JSON=$(echo "$TASK_JSON" | jq -c ".children=$CHILD_TASKS_JSON")
+        fi
+      fi
+
+    if [ "$FIRST_ELEMENT" = true ]; then
+      FIRST_ELEMENT=false
+    else
+      ALL_TASKS_JSON="${ALL_TASKS_JSON},"
+    fi
+    ALL_TASKS_JSON="${ALL_TASKS_JSON}${TASK_JSON}"
+  done
+  ALL_TASKS_JSON="${ALL_TASKS_JSON}]"
+  echo "$ALL_TASKS_JSON"
+}
+
+function load_json_content_of_ids() {
+  if [ -z "$ALL_TASKS_JSON" ] && [ -n "$IDS" ];then
+    echo " load json of ids" 1>&2
+    ALL_TASKS_JSON="$(load_json_of_ids "$IDS" $CHILD_DEPTH)"
+    ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
+  elif [ -z "$ALL_TASKS_JSON" ] && [ -z "$IDS" ];then
+    echo "no content" 1>&2
+    ALL_TASKS_JSON="[]"
+  fi
+}
+
 function assert_json() {
   echo "$1" | jq -e '.' >/dev/null 2>&1 && echo "1"
 }
@@ -30,28 +81,6 @@ function write_issue() {
   curl -X PUT -H "Content-type:application/json" -s -3 -d @- "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}"
 }
 
-function modify_custom_json() {
-  local ID="$1"
-  local JSON="$2"  
-  local JSON_MODIFICATION="$3"
-  local OLD_VALUE=$(echo "$JSON" | jq -r ".description")
-  if [ $(assert_json "$OLD_VALUE") ]; then
-    #redtask 3126 des "{\\\"hi\\\":4}"
-    # $2='.a="4" | .b=5'
-    if [ -z "$OLD_VALUE" ];then
-      #echo "old description was empty"
-      local OLD_VALUE="{}"
-    fi
-  else
-    local OLD_VALUE="{}"
-    echo "old description was not a json content" 1>&2
-  fi
-
-  local NEW_VALUE=$(echo "$OLD_VALUE" | jq -c "$JSON_MODIFICATION" | sed -e 's/"/\\\"/g')
-  #echo "New: $NEW_VALUE" 1>&2
-  write_issue $ID "'description':'$NEW_VALUE'"
-}
-
 function modifier_string_for_custom_json() {
   local JSON="$1"
   local JSON_MODIFICATION="$2"
@@ -67,7 +96,6 @@ function modifier_string_for_custom_json() {
   local NEW_VALUE=$(echo "$OLD_VALUE" | jq -c "$JSON_MODIFICATION" | sed -e 's/"/\\\"/g')
   echo "'$CUSTOM_JSON_KEY':'$NEW_VALUE'"
 }
-
 
 function ids_from_json_array() {
   echo "$(echo "$1" | jq '.[]|.id')"
@@ -91,7 +119,6 @@ function project_member_by_name() {
     echo
   fi
 }
-
 
 #TODO:
 function load_json_content_for_ids() {
@@ -117,5 +144,4 @@ function parse_custom_json_field() {
 function load_json_content_of_children() {
   :
 }
-
 
