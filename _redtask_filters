@@ -14,6 +14,7 @@ while true;do
 
     elif [ $(echo "$1" | grep "json:stdin") ]; then
       shift
+      #TODO: how to append exisiting json
       ALL_TASKS_JSON="$(cat)"
       IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
       ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
@@ -30,8 +31,6 @@ while true;do
       VARIABLE_NAME=$(echo "$1" | sed 's/^filter://g')
       shift
       load_json_content_of_ids
-      #ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | .children=(.children | del(.[] | select(.status_id == 5 or .status_id == 6)) )]')
-      #ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[]| select(.story_points>2.5)]' )
       ALL_TASKS_JSON="$(eval $VARIABLE_NAME)"
 
     elif [ $(echo "$1" | grep "\<assigned:[0-9]*\>") ]; then
@@ -43,12 +42,12 @@ while true;do
     elif [ $(echo "$1" | grep "\<assigned:[a-zA-Z0-9_-]*\>") ]; then
       USER_STRING=$(echo "$1" | sed 's/^assigned://g')
       shift
+      #TODO: how to provide a list of assignees
       MATCHING_USER_ID="$(project_member_by_name $USER_STRING)"
       if [ -n "$MATCHING_USER_ID" ];then
         ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.assigned_to.id==$MATCHING_USER_ID)]" )
       fi
 
-    #elif [ "$1" = "hierarchy" ]; then
     elif [[ $1 =~ ^hier($|(a$|ar$|arc$|arch$|archy$)) ]] || [ "$1" = "hrchy" ]; then
       shift
       #TODO: what to do with issues whos parent is not in the json structure

@@ -115,7 +115,6 @@ while true;do
     elif [ "$(echo "$1" | grep "\<cjson:.*")" ]; then
       VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^cjson://g')"
       shift
-      #load_json_content_of_ids
       #redtask 3277 cjson '.tags+=["hi"]'
       #redtask 3277 cjson '.+{"c":4}'
       #redtask 3277 cjson '.b=5'
@@ -188,7 +187,6 @@ while true;do
       fi
 
     elif [ "$(echo "$1" | grep "\<\(add_task\|add\):.*")" ]; then
-      #SUBJECT_STRING="$(echo "$1" | sed -e 's/^add_task://g')"
       SUBJECT_STRING="$(echo "$1" | sed -e 's/^add://g' -e 's/^add_task://g')"
       shift
       MODIFIER="add"
