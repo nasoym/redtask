@@ -107,6 +107,19 @@ if [ "$#" -ge 1 ]; then
     shift
     echo "$IDS"
 
+  elif [ "$1" = "csids" ]; then
+    shift
+    FIRST_ELEMENT=true
+    for ID in $IDS; do
+      if [ "$FIRST_ELEMENT" = true ];then
+        echo -n "$ID"
+        FIRST_ELEMENT=false
+      else
+        echo -n ",$ID"
+      fi
+    done
+    echo
+
   elif [ $(echo "$1" | grep "print:[a-zA-Z0-9_-]\{1,\}") ]; then
     VARIABLE_NAME=$(echo "$1" | sed 's/^print://g')
     shift
