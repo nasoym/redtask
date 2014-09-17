@@ -15,6 +15,9 @@ source $SCRIPT_PATH/_redtask_options
 : ${USER_ID:="me"}
 : ${CHILD_DEPTH:=0}
 : ${CUSTOM_JSON_KEY:="description"}
+: ${CHILD_LEADING_SPACES:="    "}
+IFS=$'\n'
+IFS=${IFS:0:1}
 
 if [ -z "$SERVER" ] || [ -z "$PROJECT_ID" ] || [ -z "$KEY" ]; then
   echo "SERVER,PROJECT_ID or KEY variable are not defined." >&2

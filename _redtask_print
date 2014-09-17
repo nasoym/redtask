@@ -63,26 +63,12 @@ function print_command_details() {
 
 function json_line_print(){
   local JSON="$1"
-  local LEADING_SPACES="$2"
-  local PRINT_COMMAND="$3"
-
-  if [ -n "$PRINT_COMMAND" ]; then
-    $PRINT_COMMAND "$JSON" "$LEADING_SPACES"
-  else 
-    print_command "$JSON" "$LEADING_SPACES"
-  fi
-
-  local CHILD_TASKS="$(echo "$JSON" | jq -r -c 'if has("children") then .children[] else "" end')"
-  if [ -n "$CHILD_TASKS" ];then
-    local OLD_IFS="$IFS"
-    local IFS=$'\n'
-    local IFS=${IFS:0:1}
-    local ALL_CHILD_JSONS=(${CHILD_TASKS})
-    local IFS=$OLD_IFS
-    for CHILD_JSON in "${ALL_CHILD_JSONS[@]}"; do
-      json_line_print "$CHILD_JSON" "$LEADING_SPACES    " "$PRINT_COMMAND"
-    done
-  fi
+  local PRINT_COMMAND="$2"
+  local LEADING_SPACES="$3"
+  $PRINT_COMMAND "$JSON" "$LEADING_SPACES"
+  for CHILD_JSON in $(echo "$JSON" | jq -r -c 'if has("children") then .children[] else "" end'); do
+    json_line_print "$CHILD_JSON" "$PRINT_COMMAND" "$LEADING_SPACES$CHILD_LEADING_SPACES" 
+  done
 }
 
 if [ "$#" -ge 1 ]; then
@@ -93,16 +79,8 @@ if [ "$#" -ge 1 ]; then
       PRINT_COMMAND="print_command_details"
     fi
     load_json_content_of_ids
-    TASK_JSON_LINES="$(echo "$ALL_TASKS_JSON" | jq -c '.[]')"
-
-    OLD_IFS="$IFS"
-    IFS=$'\n'
-    IFS=${IFS:0:1}
-    TASK_JSONS=(${TASK_JSON_LINES})
-    IFS=$OLD_IFS
-
-    for TASK_JSON in "${TASK_JSONS[@]}"; do
-      json_line_print "$TASK_JSON" "" "$PRINT_COMMAND"
+    for TASK_JSON in $( echo "$ALL_TASKS_JSON" | jq -c '.[]' ); do
+      json_line_print "$TASK_JSON" "$PRINT_COMMAND"
     done
 
   elif [ "$1" = "pretty" ]; then
