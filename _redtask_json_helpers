@@ -1,0 +1,25 @@
+#!/bin/bash
+
+function assert_json() {
+  echo "$1" | jq -e '.' >/dev/null 2>&1 && echo "1"
+}
+
+function json_lines_to_json_array() {
+  local JSON_LINES="$1"
+  local JSON_ARRAY=""
+  for JSON in $JSON_LINES; do
+    if [ -z "$JSON_ARRAY" ];then
+      JSON_ARRAY="[$JSON"
+    else
+      JSON_ARRAY+=",$JSON"
+    fi
+  done
+  JSON_ARRAY+="]"
+  echo "$JSON_ARRAY"
+}
+
+function ids_from_json_array() {
+  echo "$(echo "$1" | jq '.[]|.id')"
+}
+
+

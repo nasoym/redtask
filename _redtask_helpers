@@ -50,24 +50,6 @@ function load_json_content_of_ids() {
   fi
 }
 
-function assert_json() {
-  echo "$1" | jq -e '.' >/dev/null 2>&1 && echo "1"
-}
-
-function json_lines_to_json_array() {
-  local JSON_LINES="$1"
-  local JSON_ARRAY=""
-  for JSON in $JSON_LINES; do
-    if [ -z "$JSON_ARRAY" ];then
-      JSON_ARRAY="[$JSON"
-    else
-      JSON_ARRAY+=",$JSON"
-    fi
-  done
-  JSON_ARRAY+="]"
-  echo "$JSON_ARRAY"
-}
-
 function write_issue() {
   local ISSUE_ID=$1
   local VALUES=$2
@@ -90,10 +72,6 @@ function modifier_string_for_custom_json() {
   fi
   local NEW_VALUE=$(echo "$OLD_VALUE" | jq -c "$JSON_MODIFICATION" | sed -e 's/"/\\\"/g')
   echo "'$CUSTOM_JSON_KEY':'$NEW_VALUE'"
-}
-
-function ids_from_json_array() {
-  echo "$(echo "$1" | jq '.[]|.id')"
 }
 
 function project_members() {
