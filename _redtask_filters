@@ -53,11 +53,6 @@ while true;do
         ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.assigned_to.id==$MATCHING_USER_ID)]" )
       fi
 
-    elif [ "$1" = "custom" ]; then
-      shift
-      load_json_content_of_ids
-      ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
-
     #elif [ "$1" = "hierarchy" ]; then
     elif [[ $1 =~ ^hier($|(a$|ar$|arc$|arch$|archy$)) ]] || [ "$1" = "hrchy" ]; then
       shift
