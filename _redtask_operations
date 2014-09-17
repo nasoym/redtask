@@ -79,38 +79,34 @@ while true;do
     elif [ $(echo "$1" | grep "\<complex:[0-9]*\>") ]; then
       VALUE="$(echo "$1" | sed 's/^complex://g')"
       shift
-      if [ -z "$CUSTOM_JSON_MODIFIER" ];then
-        CUSTOM_JSON_MODIFIER=".complexity=$VALUE"
-      else
-        CUSTOM_JSON_MODIFIER="$CUSTOM_JSON_MODIFIER|.complexity=$VALUE"
+      if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+        CUSTOM_JSON_MODIFIER+="|"
       fi
+      CUSTOM_JSON_MODIFIER+=".complexity=$VALUE"
 
     elif [ $(echo "$1" | grep "\<inno:[0-9]*\>") ]; then
       VALUE="$(echo "$1" | sed 's/^inno://g')"
       shift
-      if [ -z "$CUSTOM_JSON_MODIFIER" ];then
-        CUSTOM_JSON_MODIFIER=".innovation=$VALUE"
-      else
-        CUSTOM_JSON_MODIFIER="$CUSTOM_JSON_MODIFIER|.innovation=$VALUE"
+      if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+        CUSTOM_JSON_MODIFIER+="|"
       fi
+      CUSTOM_JSON_MODIFIER+=".innovation=$VALUE"
 
     elif [ "$(echo "$1" | grep "\+[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
       TAG="$(echo "$1" | sed -e 's/^+//g')"
       shift
-      if [ -z "$CUSTOM_JSON_MODIFIER" ];then
-        CUSTOM_JSON_MODIFIER=".tags+=[\"$TAG\"]"
-      else
-        CUSTOM_JSON_MODIFIER="$CUSTOM_JSON_MODIFIER|.tags+=[\"$TAG\"]"
+      if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+        CUSTOM_JSON_MODIFIER+="|"
       fi
+      CUSTOM_JSON_MODIFIER+=".tags+=[\"$TAG\"]"
 
     elif [ "$(echo "$1" | grep "\-[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
       TAG="$(echo "$1" | sed -e 's/^-//g')"
       shift
-      if [ -z "$CUSTOM_JSON_MODIFIER" ];then
-        CUSTOM_JSON_MODIFIER=".tags-=[\"$TAG\"]"
-      else
-        CUSTOM_JSON_MODIFIER="$CUSTOM_JSON_MODIFIER|.tags-=[\"$TAG\"]"
+      if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+        CUSTOM_JSON_MODIFIER+="|"
       fi
+      CUSTOM_JSON_MODIFIER+=".tags-=[\"$TAG\"]"
 
     elif [ "$(echo "$1" | grep "\<cjson:.*")" ]; then
       VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^cjson://g')"
@@ -227,11 +223,11 @@ case "$MODIFIER" in
     load_json_content_of_ids
     for ID in $IDS; do
       JSON=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")
-      if [ -z "$FINAL_MODIFICATION_STRING" ];then
-        LOCAL_FINAL_MODIFICATION_STRING="$(modifier_string_for_custom_json "$JSON" "$CUSTOM_JSON_MODIFIER")"
-      else
-        LOCAL_FINAL_MODIFICATION_STRING="$FINAL_MODIFICATION_STRING,$(modifier_string_for_custom_json "$JSON" "$CUSTOM_JSON_MODIFIER")"
+      LOCAL_FINAL_MODIFICATION_STRING="$FINAL_MODIFICATION_STRING"
+      if [ -n "$LOCAL_FINAL_MODIFICATION_STRING" ];then
+        LOCAL_FINAL_MODIFICATION_STRING+=","
       fi
+      LOCAL_FINAL_MODIFICATION_STRING+="$(modifier_string_for_custom_json "$JSON" "$CUSTOM_JSON_MODIFIER")"
       write_issue $ID "$LOCAL_FINAL_MODIFICATION_STRING"
     done
     ;;
