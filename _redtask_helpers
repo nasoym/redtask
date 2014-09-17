@@ -17,8 +17,7 @@ function load_json_of_ids() {
   fi
   ALL_TASKS_JSON="["
   FIRST_ELEMENT=true
-  for ID in $IDS
-  do
+  for ID in $IDS; do
     TASK_JSON=$(issue $ID)
 
       if [ "$DEPTH" -gt 0 ];then
@@ -57,19 +56,15 @@ function assert_json() {
 
 function json_lines_to_json_array() {
   local JSON_LINES="$1"
-  local IFS=$'\n'
-  local LINES_ARRAY=(${JSON_LINES})
-  local JSON_ARRAY="["
-  local FIRST_ELEMENT=1
-  for JSON in "${LINES_ARRAY[@]}"; do
-    if [ "$FIRST_ELEMENT" -eq 1 ];then
-      FIRST_ELEMENT=0
-      JSON_ARRAY="${JSON_ARRAY}${JSON}"
+  local JSON_ARRAY=""
+  for JSON in $JSON_LINES; do
+    if [ -z "$JSON_ARRAY" ];then
+      JSON_ARRAY="[$JSON"
     else
-      JSON_ARRAY="${JSON_ARRAY},${JSON}"
+      JSON_ARRAY+=",$JSON"
     fi
   done
-  local JSON_ARRAY="$JSON_ARRAY]"
+  JSON_ARRAY+="]"
   echo "$JSON_ARRAY"
 }
 

@@ -99,16 +99,15 @@ if [ "$#" -ge 1 ]; then
 
   elif [ "$1" = "csids" ]; then
     shift
-    FIRST_ELEMENT=true
+    COMMA_SEPARATED_IDS=""
     for ID in $IDS; do
-      if [ "$FIRST_ELEMENT" = true ];then
-        echo -n "$ID"
-        FIRST_ELEMENT=false
+      if [ -z "$COMMA_SEPARATED_IDS" ];then
+        COMMA_SEPARATED_IDS="$ID"
       else
-        echo -n ",$ID"
+        COMMA_SEPARATED_IDS+=",$ID"
       fi
     done
-    echo
+    echo "$COMMA_SEPARATED_IDS"
 
   elif [ $(echo "$1" | grep "print:[a-zA-Z0-9_-]\{1,\}") ]; then
     VARIABLE_NAME=$(echo "$1" | sed 's/^print://g')

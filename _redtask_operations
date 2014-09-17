@@ -208,14 +208,12 @@ while true;do
   fi
 done
 
-FIRST_ELEMENT=true
 FINAL_MODIFICATION_STRING=""
 for I in "${MODIFICATION_VALUES[@]}"; do
-  if [ "$FIRST_ELEMENT" = true ]; then
-    FIRST_ELEMENT=false
+  if [ -z "$FINAL_MODIFICATION_STRING" ];then
     FINAL_MODIFICATION_STRING="$I"
   else
-    FINAL_MODIFICATION_STRING="$FINAL_MODIFICATION_STRING,$I"
+    FINAL_MODIFICATION_STRING+=",$I"
   fi
 done
 
