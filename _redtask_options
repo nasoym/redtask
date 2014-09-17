@@ -1,20 +1,14 @@
 #!/bin/bash
 
 PARSED_OPTIONS=""
-while getopts "o:c:p:a" options; do
+while getopts "c:p:" options; do
   PARSED_OPTIONS="${PARSED_OPTIONS} -${options}${OPTARG}"
   case $options in
-    o )
-        ASSIGN_TO_OWNER=$OPTARG
-        ;;
     c )
         CHILD_DEPTH=$OPTARG
         ;;
     p )
         PROJECT_ID=$OPTARG
-        ;;
-    a )
-        APPEND=1
         ;;
    \? ) 
         exit 1
