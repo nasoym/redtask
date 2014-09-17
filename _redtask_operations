@@ -2,6 +2,9 @@
 
 MODIFIER=""
 MODIFICATION_VALUES=()
+TAGS_TO_ADD=()
+TAGS_TO_SUBTRACT=()
+CUSTOM_JSON_MODIFIER=""
 
 while true;do
   if [ "$#" -ge 1 ]; then
@@ -70,6 +73,16 @@ while true;do
       shift
       MODIFICATION_VALUES+=("'parent_issue_id':$PARENT")
 
+    elif [ "$(echo "$1" | grep "\+[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
+      TAG="$(echo "$1" | sed -e 's/^+//g')"
+      shift
+      TAGS_TO_ADD+=( "$TAG" )
+
+    elif [ "$(echo "$1" | grep "\-[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
+      TAG="$(echo "$1" | sed -e 's/^-//g')"
+      shift
+      TAGS_TO_SUBTRACT+=( "$TAG" )
+
     elif [ "$(echo "$1" | grep "\<cjson:.*")" ]; then
       VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^cjson://g')"
       shift
@@ -77,11 +90,7 @@ while true;do
       #redtask 3277 cjson '.tags+=["hi"]'
       #redtask 3277 cjson '.+{"c":4}'
       #redtask 3277 cjson '.b=5'
-      for ID in $IDS
-      do
-        JSON=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")
-        MODIFICATION_VALUES+=( "$(modifier_string_for_custom_json "$JSON" "$VALUE_ARGUMENT")" )
-      done
+      CUSTOM_JSON_MODIFIER="$VALUE_ARGUMENT"
 
     elif [ "$(echo "$1" | grep "\<key:[a-z]*:.*")" ]; then
       KEY_NAME="$(echo "$1" | sed -e 's/^key:\([a-z]*\):.*$/\1/g')"
@@ -98,33 +107,33 @@ while true;do
         MODIFICATION_VALUES+=("'$KEY_NAME':'$NEW_VALUE'")
       done
 
-    elif [ "$1" = "json" ] && [ "$#" -ge 2 ]; then
-      VALUE_ARGUMENT="$2"
-      shift
-      shift
-      load_json_content_of_ids
-
-      for ID in $IDS
-      do
-        OLD_VALUE=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)|.description")
-        if [ -n "$APPEND" ]; then
-          if [ $(assert_json "$OLD_VALUE") ]; then
-            #redtask 3126 des "{\\\"hi\\\":4}"
-            # $2='.a="4" | .b=5'
-            if [ -z "$OLD_VALUE" ];then
-              #echo "old description was empty"
-              OLD_VALUE="{}"
-            fi
-            NEW_VALUE=$(echo "$OLD_VALUE" | jq -c "$VALUE_ARGUMENT" | sed -e 's/"/\\\"/g')
-            write_issue $ID "'description':'$NEW_VALUE'"
-          else
-            echo "old description was not a json content"
-          fi
-        else
-          NEW_VALUE=$(echo "$VALUE_ARGUMENT" | sed -e 's/"/\\\"/g')
-          write_issue $ID "'description':'$NEW_VALUE'"
-        fi
-      done
+#    elif [ "$1" = "json" ] && [ "$#" -ge 2 ]; then
+#      VALUE_ARGUMENT="$2"
+#      shift
+#      shift
+#      load_json_content_of_ids
+#
+#      for ID in $IDS
+#      do
+#        OLD_VALUE=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)|.description")
+#        if [ -n "$APPEND" ]; then
+#          if [ $(assert_json "$OLD_VALUE") ]; then
+#            #redtask 3126 des "{\\\"hi\\\":4}"
+#            # $2='.a="4" | .b=5'
+#            if [ -z "$OLD_VALUE" ];then
+#              #echo "old description was empty"
+#              OLD_VALUE="{}"
+#            fi
+#            NEW_VALUE=$(echo "$OLD_VALUE" | jq -c "$VALUE_ARGUMENT" | sed -e 's/"/\\\"/g')
+#            write_issue $ID "'description':'$NEW_VALUE'"
+#          else
+#            echo "old description was not a json content"
+#          fi
+#        else
+#          NEW_VALUE=$(echo "$VALUE_ARGUMENT" | sed -e 's/"/\\\"/g')
+#          write_issue $ID "'description':'$NEW_VALUE'"
+#        fi
+#      done
 
     elif [ "$1" = "mo" ]; then
       shift
@@ -167,11 +176,33 @@ while true;do
   fi
 done
 
+FIRST_ELEMENT=true
+FINAL_TAG_STRING=""
+for TAG in "${TAGS_TO_ADD[@]}"; do
+  if [ "$FIRST_ELEMENT" = true ]; then
+    FIRST_ELEMENT=false
+    FINAL_TAG_STRING=".tags+=[\"$TAG\"]"
+  else
+    FINAL_TAG_STRING="$FINAL_TAG_STRING|.tags+=[\"$TAG\"]"
+  fi
+done
+for TAG in "${TAGS_TO_SUBTRACT[@]}"; do
+  if [ "$FIRST_ELEMENT" = true ]; then
+    FIRST_ELEMENT=false
+    FINAL_TAG_STRING=".tags-=[\"$TAG\"]"
+  else
+    FINAL_TAG_STRING="$FINAL_TAG_STRING|.tags-=[\"$TAG\"]"
+  fi
+done
+if [ -z "$CUSTOM_JSON_MODIFIER" ] && [ -n "$FINAL_TAG_STRING" ];then
+  CUSTOM_JSON_MODIFIER="$FINAL_TAG_STRING"
+elif [ -n "$FINAL_TAG_STRING" ];then
+  CUSTOM_JSON_MODIFIER="$CUSTOM_JSON_MODIFIER|$FINAL_TAG_STRING"
+fi
 
 FIRST_ELEMENT=true
 FINAL_MODIFICATION_STRING=""
-for I in "${MODIFICATION_VALUES[@]}"
-do
+for I in "${MODIFICATION_VALUES[@]}"; do
   if [ "$FIRST_ELEMENT" = true ]; then
     FIRST_ELEMENT=false
     FINAL_MODIFICATION_STRING="$I"
@@ -187,9 +218,15 @@ case "$MODIFIER" in
 
   "mo")
     #echo "$FINAL_MODIFICATION_STRING"
+    load_json_content_of_ids
     for ID in $IDS; do
-      #echo "write modification: >$FINAL_MODIFICATION_STRING<"
-      write_issue $ID "$FINAL_MODIFICATION_STRING"
+      JSON=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")
+      if [ -z "$FINAL_MODIFICATION_STRING" ];then
+        LOCAL_FINAL_MODIFICATION_STRING="$(modifier_string_for_custom_json "$JSON" "$CUSTOM_JSON_MODIFIER")"
+      else
+        LOCAL_FINAL_MODIFICATION_STRING="$FINAL_MODIFICATION_STRING,$(modifier_string_for_custom_json "$JSON" "$CUSTOM_JSON_MODIFIER")"
+      fi
+      write_issue $ID "$LOCAL_FINAL_MODIFICATION_STRING"
     done
     ;;
 
