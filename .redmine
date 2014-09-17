@@ -3,6 +3,10 @@
 function filter_01() {
   echo "$ALL_TASKS_JSON" |\
   jq -c "[.[]| select(.fixed_version.id != null )]"
+
+  #jq -c '[.[] | .children=(.children | del(.[] | select(.status_id == 5 or .status_id == 6)) )]'
+  #jq -c '[.[]| select(.story_points>2.5)]' 
+
   #jq -c "[.[]| select(.fixed_version.id == null )]"
   #jq -c "[.[]| select(.fixed_version.id != null )]"
   #jq -c "[.[]| select(.fixed_version.id != $(current_sprint_id) )]"
