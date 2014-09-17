@@ -1,5 +1,13 @@
 #!/bin/bash
 
+function filter_01() {
+  echo "$ALL_TASKS_JSON" |\
+  jq -c "[.[]| select(.fixed_version.id != null )]"
+  #jq -c "[.[]| select(.fixed_version.id == null )]"
+  #jq -c "[.[]| select(.fixed_version.id != null )]"
+  #jq -c "[.[]| select(.fixed_version.id != $(current_sprint_id) )]"
+}
+
 function current_sprint_id() {
   curl -s -3 "https://$SERVER/projects/$PROJECT_ID/versions.json?key=$KEY" |\
   jq '(.versions[] | select( .status == "open") | .id)'
