@@ -26,18 +26,13 @@ while true;do
       IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
       ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
 
-    elif [ "$1" = "test_filter" ]; then
+    elif [ $(echo "$1" | grep "filter:[a-zA-Z0-9_-]\{1,\}") ]; then
+      VARIABLE_NAME=$(echo "$1" | sed 's/^filter://g')
       shift
       load_json_content_of_ids
-      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[]| select(.story_points>2.5)]' )
-
-    elif [ "$1" = "open" ]; then
-      shift
-      load_json_content_of_ids
-      #TODO: run filter on all child issues
-      #echo '{"a":44,"b":[{"a":1},{"a":2},{"a":3}]}' | jq -c '.b= (.b | del(.[] | select(.a<2)) )'
-      #echo '[{"a":44,"b":[{"a":1},{"a":2},{"a":3}]},{"a":55,"b":[{"a":99}]}]' | jq -c '[.[] | .b= (.b | del(.[] | select(.a<2)) )]'
-      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | .children=(.children | del(.[] | select(.status_id == 5 or .status_id == 6)) )]')
+      #ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | .children=(.children | del(.[] | select(.status_id == 5 or .status_id == 6)) )]')
+      #ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c '[.[]| select(.story_points>2.5)]' )
+      ALL_TASKS_JSON="$(eval $VARIABLE_NAME)"
 
     elif [ $(echo "$1" | grep "\<assigned:[0-9]*\>") ]; then
       USER_ID=$(echo "$1" | sed 's/^assigned://g')
