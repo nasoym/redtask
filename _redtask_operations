@@ -2,8 +2,6 @@
 
 MODIFIER=""
 MODIFICATION_VALUES=()
-TAGS_TO_ADD=()
-TAGS_TO_SUBTRACT=()
 CUSTOM_JSON_MODIFIER=""
 
 while true;do
@@ -76,21 +74,33 @@ while true;do
     elif [ "$(echo "$1" | grep "\+[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
       TAG="$(echo "$1" | sed -e 's/^+//g')"
       shift
-      TAGS_TO_ADD+=( "$TAG" )
+      if [ -z "$CUSTOM_JSON_MODIFIER" ];then
+        CUSTOM_JSON_MODIFIER=".tags+=[\"$TAG\"]"
+      else
+        CUSTOM_JSON_MODIFIER="$CUSTOM_JSON_MODIFIER|.tags+=[\"$TAG\"]"
+      fi
 
     elif [ "$(echo "$1" | grep "\-[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
       TAG="$(echo "$1" | sed -e 's/^-//g')"
       shift
-      TAGS_TO_SUBTRACT+=( "$TAG" )
+      if [ -z "$CUSTOM_JSON_MODIFIER" ];then
+        CUSTOM_JSON_MODIFIER=".tags-=[\"$TAG\"]"
+      else
+        CUSTOM_JSON_MODIFIER="$CUSTOM_JSON_MODIFIER|.tags-=[\"$TAG\"]"
+      fi
 
     elif [ "$(echo "$1" | grep "\<cjson:.*")" ]; then
       VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^cjson://g')"
       shift
-      load_json_content_of_ids
+      #load_json_content_of_ids
       #redtask 3277 cjson '.tags+=["hi"]'
       #redtask 3277 cjson '.+{"c":4}'
       #redtask 3277 cjson '.b=5'
-      CUSTOM_JSON_MODIFIER="$VALUE_ARGUMENT"
+      if [ -z "$CUSTOM_JSON_MODIFIER" ];then
+        CUSTOM_JSON_MODIFIER="$VALUE_ARGUMENT"
+      else
+        CUSTOM_JSON_MODIFIER="$CUSTOM_JSON_MODIFIER|$VALUE_ARGUMENT"
+      fi
 
     elif [ "$(echo "$1" | grep "\<key:[a-z]*:.*")" ]; then
       KEY_NAME="$(echo "$1" | sed -e 's/^key:\([a-z]*\):.*$/\1/g')"
@@ -175,30 +185,6 @@ while true;do
     break
   fi
 done
-
-FIRST_ELEMENT=true
-FINAL_TAG_STRING=""
-for TAG in "${TAGS_TO_ADD[@]}"; do
-  if [ "$FIRST_ELEMENT" = true ]; then
-    FIRST_ELEMENT=false
-    FINAL_TAG_STRING=".tags+=[\"$TAG\"]"
-  else
-    FINAL_TAG_STRING="$FINAL_TAG_STRING|.tags+=[\"$TAG\"]"
-  fi
-done
-for TAG in "${TAGS_TO_SUBTRACT[@]}"; do
-  if [ "$FIRST_ELEMENT" = true ]; then
-    FIRST_ELEMENT=false
-    FINAL_TAG_STRING=".tags-=[\"$TAG\"]"
-  else
-    FINAL_TAG_STRING="$FINAL_TAG_STRING|.tags-=[\"$TAG\"]"
-  fi
-done
-if [ -z "$CUSTOM_JSON_MODIFIER" ] && [ -n "$FINAL_TAG_STRING" ];then
-  CUSTOM_JSON_MODIFIER="$FINAL_TAG_STRING"
-elif [ -n "$FINAL_TAG_STRING" ];then
-  CUSTOM_JSON_MODIFIER="$CUSTOM_JSON_MODIFIER|$FINAL_TAG_STRING"
-fi
 
 FIRST_ELEMENT=true
 FINAL_MODIFICATION_STRING=""
