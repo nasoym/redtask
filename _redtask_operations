@@ -83,14 +83,11 @@ while true;do
         MODIFICATION_VALUES+=( "$(modifier_string_for_custom_json "$JSON" "$VALUE_ARGUMENT")" )
       done
 
-    elif [ "$1" = "key" ] && [ "$#" -ge 3 ]; then
-      KEY_NAME="$2"
-      VALUE_ARGUMENT="$3"
+    elif [ "$(echo "$1" | grep "\<key:[a-z]*:.*")" ]; then
+      KEY_NAME="$(echo "$1" | sed -e 's/^key:\([a-z]*\):.*$/\1/g')"
+      VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^key:[a-z]*:\(.*\)$/\1/g')"
       shift
-      shift
-      shift
-      for ID in $IDS
-      do
+      for ID in $IDS; do
         if [ -n "$APPEND" ]; then
           load_json_content_of_ids
           OLD_VALUE="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)|.$KEY_NAME")"
@@ -98,7 +95,7 @@ while true;do
         else
           NEW_VALUE="$VALUE_ARGUMENT"
         fi
-        write_issue $ID "'$KEY_NAME':'$NEW_VALUE'"
+        MODIFICATION_VALUES+=("'$KEY_NAME':'$NEW_VALUE'")
       done
 
     elif [ "$1" = "json" ] && [ "$#" -ge 2 ]; then
