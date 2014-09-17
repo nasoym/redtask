@@ -16,7 +16,7 @@ while true;do
         write_issue $ID "'status_id':'5'"
       done
 
-    elif [ "$1" = "rejected" ]; then
+    elif [ "$1" = "reject" ]; then
       shift
       for ID in $IDS; do
         write_issue $ID "'status_id':'6'"
@@ -44,9 +44,6 @@ while true;do
       ESTIMATED_HOURS=$(echo "$1" | sed 's/^estimate://g')
       shift
       MODIFICATION_VALUES+=("'estimated_hours':$ESTIMATED_HOURS")
-#      for ID in $IDS; do
-#        write_issue $ID "'estimated_hours':$ESTIMATED_HOURS"
-#      done
 
     elif [ $(echo "$1" | grep "\<version:[0-9]*\>") ]; then
       VERSION=$(echo "$1" | sed 's/^version://g')
@@ -57,9 +54,6 @@ while true;do
       OWNER=$(echo "$1" | sed 's/^assign://g')
       shift
       MODIFICATION_VALUES+=("'assigned_to_id':$OWNER")
-#      for ID in $IDS; do
-#        write_issue $ID "'assigned_to_id':$OWNER"
-#      done
 
     elif [ $(echo "$1" | grep "\<assign:[a-zA-Z0-9_-]*\>") ]; then
       USER_STRING="$(echo "$1" | sed 's/^assign://g')"
@@ -67,9 +61,6 @@ while true;do
       MATCHING_USER_ID="$(project_member_by_name $USER_STRING)"
       if [ -n "$MATCHING_USER_ID" ];then
         MODIFICATION_VALUES+=("'assigned_to_id':$MATCHING_USER_ID")
-#        for ID in $IDS; do
-#          write_issue $ID "'assigned_to_id':$MATCHING_USER_ID"
-#        done
       else
         echo "no or more than one user with:'$USER_STRING' was found." 1>&2
       fi
@@ -78,9 +69,19 @@ while true;do
       PARENT="$(echo "$1" | sed 's/^parent://g')"
       shift
       MODIFICATION_VALUES+=("'parent_issue_id':$PARENT")
-#      for ID in $IDS; do
-#        write_issue $ID "'parent_issue_id':$PARENT"
-#      done
+
+    elif [ "$(echo "$1" | grep "\<cjson:.*")" ]; then
+      VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^cjson://g')"
+      shift
+      load_json_content_of_ids
+      #redtask 3277 cjson '.tags+=["hi"]'
+      #redtask 3277 cjson '.+{"c":4}'
+      #redtask 3277 cjson '.b=5'
+      for ID in $IDS
+      do
+        JSON=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")
+        MODIFICATION_VALUES+=( "$(modifier_string_for_custom_json "$JSON" "$VALUE_ARGUMENT")" )
+      done
 
     elif [ "$1" = "key" ] && [ "$#" -ge 3 ]; then
       KEY_NAME="$2"
@@ -98,19 +99,6 @@ while true;do
           NEW_VALUE="$VALUE_ARGUMENT"
         fi
         write_issue $ID "'$KEY_NAME':'$NEW_VALUE'"
-      done
-
-    elif [ "$(echo "$1" | grep "\<cjson:.*")" ]; then
-      VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^cjson://g')"
-      shift
-      load_json_content_of_ids
-      #redtask 3277 cjson '.tags+=["hi"]'
-      #redtask 3277 cjson '.+{"c":4}'
-      #redtask 3277 cjson '.b=5'
-      for ID in $IDS
-      do
-        JSON=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")
-        MODIFICATION_VALUES+=( "$(modifier_string_for_custom_json "$JSON" "$VALUE_ARGUMENT")" )
       done
 
     elif [ "$1" = "json" ] && [ "$#" -ge 2 ]; then
