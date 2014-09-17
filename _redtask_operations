@@ -114,11 +114,10 @@ while true;do
       #redtask 3277 cjson '.tags+=["hi"]'
       #redtask 3277 cjson '.+{"c":4}'
       #redtask 3277 cjson '.b=5'
-      if [ -z "$CUSTOM_JSON_MODIFIER" ];then
-        CUSTOM_JSON_MODIFIER="$VALUE_ARGUMENT"
-      else
-        CUSTOM_JSON_MODIFIER="$CUSTOM_JSON_MODIFIER|$VALUE_ARGUMENT"
+      if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+        CUSTOM_JSON_MODIFIER+="|"
       fi
+      CUSTOM_JSON_MODIFIER+="$VALUE_ARGUMENT"
 
     elif [ "$(echo "$1" | grep "\<key:[a-z]*:.*")" ]; then
       KEY_NAME="$(echo "$1" | sed -e 's/^key:\([a-z]*\):.*$/\1/g')"
