@@ -86,26 +86,13 @@ function json_line_print(){
 }
 
 if [ "$#" -ge 1 ]; then
-  if [ "$1" = "lines" ]; then
-    shift
-    load_json_content_of_ids
-    #ALL_TASKS_JSON="$(echo "$ALL_TASKS_JSON" | jq -c '. | sort_by(.status_id) | reverse' )"
-    TASK_JSON_LINES="$(echo "$ALL_TASKS_JSON" | jq -c '.[]')"
-
-    OLD_IFS="$IFS"
-    IFS=$'\n'
-    IFS=${IFS:0:1}
-    TASK_JSONS=(${TASK_JSON_LINES})
-    IFS=$OLD_IFS
-
-    for TASK_JSON in "${TASK_JSONS[@]}"; do
-      json_line_print "$TASK_JSON" "" "print_command_details"
-      #json_line_print "$TASK_JSON" "" "print_command"
-    done
-
-  elif [ $(echo "$1" | grep "lines:[a-zA-Z0-9_-]\{1,\}") ]; then
+  if [ $(echo "$1" | grep "lines:[a-zA-Z0-9_-]*") ]; then
     PRINT_COMMAND=$(echo "$1" | sed 's/^lines://g')
     shift
+    if [ -z "$PRINT_COMMAND" ]; then
+      PRINT_COMMAND="print_command_details"
+    fi
+    load_json_content_of_ids
     TASK_JSON_LINES="$(echo "$ALL_TASKS_JSON" | jq -c '.[]')"
 
     OLD_IFS="$IFS"
@@ -149,6 +136,7 @@ if [ "$#" -ge 1 ]; then
     VARIABLE_NAME=$(echo "$1" | sed 's/^print://g')
     shift
     eval $VARIABLE_NAME
+
   fi
 else
   echo "$IDS"
