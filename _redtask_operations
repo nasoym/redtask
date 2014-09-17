@@ -71,6 +71,29 @@ while true;do
       shift
       MODIFICATION_VALUES+=("'parent_issue_id':$PARENT")
 
+    elif [ "$(echo "$1" | grep "\<subject:.*")" ]; then
+      SUBJECT_STRING="$(echo "$1" | sed -e 's/^subject://g')"
+      shift
+      MODIFICATION_VALUES+=("'subject':'$SUBJECT_STRING'")
+
+    elif [ $(echo "$1" | grep "\<complex:[0-9]*\>") ]; then
+      VALUE="$(echo "$1" | sed 's/^complex://g')"
+      shift
+      if [ -z "$CUSTOM_JSON_MODIFIER" ];then
+        CUSTOM_JSON_MODIFIER=".complexity=$VALUE"
+      else
+        CUSTOM_JSON_MODIFIER="$CUSTOM_JSON_MODIFIER|.complexity=$VALUE"
+      fi
+
+    elif [ $(echo "$1" | grep "\<inno:[0-9]*\>") ]; then
+      VALUE="$(echo "$1" | sed 's/^inno://g')"
+      shift
+      if [ -z "$CUSTOM_JSON_MODIFIER" ];then
+        CUSTOM_JSON_MODIFIER=".innovation=$VALUE"
+      else
+        CUSTOM_JSON_MODIFIER="$CUSTOM_JSON_MODIFIER|.innovation=$VALUE"
+      fi
+
     elif [ "$(echo "$1" | grep "\+[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
       TAG="$(echo "$1" | sed -e 's/^+//g')"
       shift
@@ -106,6 +129,7 @@ while true;do
       KEY_NAME="$(echo "$1" | sed -e 's/^key:\([a-z]*\):.*$/\1/g')"
       VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^key:[a-z]*:\(.*\)$/\1/g')"
       shift
+      #TODO: append will not work when applying to several ids
       for ID in $IDS; do
         if [ -n "$APPEND" ]; then
           load_json_content_of_ids
