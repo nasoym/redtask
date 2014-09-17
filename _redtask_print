@@ -1,12 +1,21 @@
 #!/bin/bash
 
-function print_command() {
+function print_details() {
   local JSON="$1"
   local LEADING_SPACES="$2"
-  echo "$JSON" |\
-  jq -r "\"$LEADING_SPACES\(.id) \(.subject) \(.cjson.tags//\"\") \"" |\
-  sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
-  #jq -r "\"\(.id) \(.subject) \(.status_name//\"\")\""
+
+  LINE="$(echo "$JSON" |\
+  jq -r \
+"\"$LEADING_SPACES\
+\(.id)\
+ \(.fixed_version.name)\
+ parent:\(.parent.id)\
+ assign:\(.assigned_to.name)\
+ \\\"\(.subject)\\\"\
+\"" |\
+  sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
+
+  echo "$LINE"
 }
 
 function print_command_details() {
@@ -15,23 +24,39 @@ function print_command_details() {
   #local FEATURE=$(echo "$JSON" | jq -r 'if .tracker_name == "Feature" then 1 else 0 end')
   local FEATURE=$(echo "$JSON" | jq -r 'if .tracker.id == 2 then 1 else 0 end')
   if [ "$FEATURE" -eq 1 ]; then
+    LINE="$(echo "$JSON" |\
+    jq -r \
+"\"$LEADING_SPACES\
+\(.id)\
+[\(.done_ratio//\"-\")%:\(.story_points//\"-\")p]\
+ \(.assigned_to.name//\"\"):\
+ \\\"\(.subject)\\\"\
+\"" |\
+    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
+
     tput setaf 5
-    echo "$JSON" |\
-    jq -r "\"$LEADING_SPACES\(.id) [\(.done_ratio//\"-\")%:\(.story_points//\"-\")p] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\"\"" |\
-    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
+    echo "$LINE"
     tput sgr0
   else
+    LINE="$(echo "$JSON" |\
+    jq -r \
+"\"$LEADING_SPACES\
+\(.id)\
+ [\(.done_ratio//\"-\")%:\(.estimated_hours//\"-\")h]\
+\(if (.cjson.tags != null) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
+ \(.assigned_to.name//\"\"):\
+ \\\"\(.subject)\\\"\
+\"" |\
+    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
+#clx:\(.cjson.complexity//\"-\") inv:\(.cjson.innovation//\"-\") 
+
     local STATUS_IN_WORK=$(echo "$JSON" | jq -r 'if .status.id == 2 then 1 else 0 end')
     if [ "$STATUS_IN_WORK" -eq 1 ]; then
       tput setaf 3
-      echo "$JSON" |\
-      jq -r "\"$LEADING_SPACES\(.id) [\(.done_ratio//\"-\")%:\(.estimated_hours//\"-\")h] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\" \(.cjson.tags//\"\") \"" |\
-      sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
+      echo "$LINE"
       tput sgr0
     else
-      echo "$JSON" |\
-      jq -r "\"$LEADING_SPACES\(.id) [\(.done_ratio//\"-\")%:\(.estimated_hours//\"-\")h] \(.assigned_to.name//\"\"): \\\"\(.subject)\\\" \(.cjson.tags//\"\")  \"" |\
-      sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
+      echo "$LINE"
     fi
   fi
 }
