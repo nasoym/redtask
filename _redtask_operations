@@ -4,259 +4,256 @@ MODIFIER=""
 MODIFICATION_VALUES=()
 CUSTOM_JSON_MODIFIER=""
 
-while true;do
-  if [ "$#" -ge 1 ]; then
+if [ "$#" -ge 1 ]; then
+  if [ "$1" = "mo" ]; then
+    shift
+    MODIFIER="mo"
 
-    if [ "$1" = "append" ]; then
-      shift
-      APPEND=1
-
-    elif [ "$1" = "done" ]; then
-      shift
-      for ID in $IDS; do
-        write_issue $ID "'status_id':'5'"
-      done
-
-    elif [ "$1" = "reject" ]; then
-      shift
-      for ID in $IDS; do
-        write_issue $ID "'status_id':'6'"
-      done
-
-    elif [ "$1" = "blocked" ]; then
-      shift
-      for ID in $IDS; do
-        write_issue $ID "'status_id':'4'"
-      done
-
-    elif [ "$1" = "doing" ]; then
-      shift
-      for ID in $IDS; do
-        write_issue $ID "'status_id':'2'"
-      done
-
-    elif [ "$1" = "delete" ]; then
-      shift
-      for ID in $IDS; do
-        curl -X DELETE -s -3 "https://$SERVER/issues/$ID.json?key=$KEY"
-      done
-
-    elif [ $(echo "$1" | grep "\<total:[0-9]*\>") ]; then
-      TOTAL_TIME=$(echo "$1" | sed 's/^total://g')
-      shift
-      MODIFICATION_VALUES+=("'remaining_hours':$TOTAL_TIME")
-      MODIFICATION_VALUES+=("'estimated_hours':$TOTAL_TIME")
-
-    elif [ $(echo "$1" | grep "\<remaining:[0-9]*\>") ]; then
-      REMAINING_HOURS=$(echo "$1" | sed 's/^remaining://g')
-      shift
-      MODIFICATION_VALUES+=("'remaining_hours':$REMAINING_HOURS")
-
-    elif [ $(echo "$1" | grep "\<estimate:[0-9]*\>") ]; then
-      ESTIMATED_HOURS=$(echo "$1" | sed 's/^estimate://g')
-      shift
-      MODIFICATION_VALUES+=("'estimated_hours':$ESTIMATED_HOURS")
-
-    elif [ $(echo "$1" | grep "\<version:[0-9]*\>") ]; then
-      VERSION=$(echo "$1" | sed 's/^version://g')
-      shift
-      MODIFICATION_VALUES+=("'fixed_version_id':$VERSION")
-
-    elif [ "$1" = "unassign" ]; then
-      shift
-      MODIFICATION_VALUES+=("'assigned_to_id':null")
-
-    elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
-      OWNER=$(echo "$1" | sed 's/^assign://g')
-      shift
-      MODIFICATION_VALUES+=("'assigned_to_id':$OWNER")
-
-    elif [ $(echo "$1" | grep "\<assign:[a-zA-Z0-9_-]*\>") ]; then
-      USER_STRING="$(echo "$1" | sed 's/^assign://g')"
-      shift
-      MATCHING_USER_ID="$(project_member_by_name $USER_STRING)"
-      if [ -n "$MATCHING_USER_ID" ];then
-        MODIFICATION_VALUES+=("'assigned_to_id':$MATCHING_USER_ID")
-      else
-        echo "no or more than one user with:'$USER_STRING' was found." 1>&2
-      fi
-
-    elif [ $(echo "$1" | grep "\<parent:[0-9]*\>") ]; then
-      PARENT="$(echo "$1" | sed 's/^parent://g')"
-      shift
-      MODIFICATION_VALUES+=("'parent_issue_id':$PARENT")
-
-    elif [ "$(echo "$1" | grep "\<subject:.*")" ]; then
-      SUBJECT_STRING="$(echo "$1" | sed -e 's/^subject://g')"
-      shift
-      MODIFICATION_VALUES+=("'subject':'$SUBJECT_STRING'")
-
-    elif [ $(echo "$1" | grep "\<complex:[0-9]*\>") ]; then
-      VALUE="$(echo "$1" | sed 's/^complex://g')"
-      shift
-      if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-        CUSTOM_JSON_MODIFIER+="|"
-      fi
-      CUSTOM_JSON_MODIFIER+=".complexity=$VALUE"
-
-    elif [ $(echo "$1" | grep "\<inno:[0-9]*\>") ]; then
-      VALUE="$(echo "$1" | sed 's/^inno://g')"
-      shift
-      if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-        CUSTOM_JSON_MODIFIER+="|"
-      fi
-      CUSTOM_JSON_MODIFIER+=".innovation=$VALUE"
-
-    elif [ "$(echo "$1" | grep "\+[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
-      TAG="$(echo "$1" | sed -e 's/^+//g')"
-      shift
-      if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-        CUSTOM_JSON_MODIFIER+="|"
-      fi
-      CUSTOM_JSON_MODIFIER+=".tags+=[\"$TAG\"]"
-
-    elif [ "$(echo "$1" | grep "\-[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
-      TAG="$(echo "$1" | sed -e 's/^-//g')"
-      shift
-      if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-        CUSTOM_JSON_MODIFIER+="|"
-      fi
-      CUSTOM_JSON_MODIFIER+=".tags-=[\"$TAG\"]"
-
-    elif [ "$(echo "$1" | grep "\<cjson:.*")" ]; then
-      VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^cjson://g')"
-      shift
-      #redtask 3277 cjson '.tags+=["hi"]'
-      #redtask 3277 cjson '.+{"c":4}'
-      #redtask 3277 cjson '.b=5'
-      if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-        CUSTOM_JSON_MODIFIER+="|"
-      fi
-      CUSTOM_JSON_MODIFIER+="$VALUE_ARGUMENT"
-
-    elif [ "$(echo "$1" | grep "\<key:[a-z]*:.*")" ]; then
-      KEY_NAME="$(echo "$1" | sed -e 's/^key:\([a-z]*\):.*$/\1/g')"
-      VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^key:[a-z]*:\(.*\)$/\1/g')"
-      shift
-      #TODO: append will not work when applying to several ids
-      for ID in $IDS; do
-        if [ -n "$APPEND" ]; then
-          load_json_content_of_ids
-          OLD_VALUE="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)|.$KEY_NAME")"
-          NEW_VALUE="${OLD_VALUE} ${VALUE_ARGUMENT}"
-        else
-          NEW_VALUE="$VALUE_ARGUMENT"
-        fi
-        MODIFICATION_VALUES+=("'$KEY_NAME':'$NEW_VALUE'")
-      done
-
-#    elif [ "$1" = "json" ] && [ "$#" -ge 2 ]; then
-#      VALUE_ARGUMENT="$2"
-#      shift
-#      shift
-#      load_json_content_of_ids
-#
-#      for ID in $IDS
-#      do
-#        OLD_VALUE=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)|.description")
-#        if [ -n "$APPEND" ]; then
-#          if [ $(assert_json "$OLD_VALUE") ]; then
-#            #redtask 3126 des "{\\\"hi\\\":4}"
-#            # $2='.a="4" | .b=5'
-#            if [ -z "$OLD_VALUE" ];then
-#              #echo "old description was empty"
-#              OLD_VALUE="{}"
-#            fi
-#            NEW_VALUE=$(echo "$OLD_VALUE" | jq -c "$VALUE_ARGUMENT" | sed -e 's/"/\\\"/g')
-#            write_issue $ID "'description':'$NEW_VALUE'"
-#          else
-#            echo "old description was not a json content"
-#          fi
-#        else
-#          NEW_VALUE=$(echo "$VALUE_ARGUMENT" | sed -e 's/"/\\\"/g')
-#          write_issue $ID "'description':'$NEW_VALUE'"
-#        fi
-#      done
-
-    elif [ "$1" = "mo" ]; then
-      shift
-      MODIFIER="mo"
-
-    elif [ "$(echo "$1" | grep "\<add_feature:.*")" ]; then
-      SUBJECT_STRING="$(echo "$1" | sed -e 's/^add_feature://g')"
-      shift
-      MODIFIER="add"
-      MODIFICATION_VALUES+=("'subject':'$SUBJECT_STRING'")
-      MODIFICATION_VALUES+=("'project_id':$PROJECT_ID")
-      MODIFICATION_VALUES+=("'tracker_id':2")
-      if [ -n "$IDS" ] && [ "$(wc -l <<<"$IDS")" -eq 1 ];then
-        MODIFICATION_VALUES+=("'parent_issue_id':$IDS")
-      elif [ -n "$IDS" ];then
-        echo "cannot create task for many parents!" 1>&2
-        MODIFIER=""
-      fi
-
-    elif [ "$(echo "$1" | grep "\<\(add_task\|add\):.*")" ]; then
-      SUBJECT_STRING="$(echo "$1" | sed -e 's/^add://g' -e 's/^add_task://g')"
-      shift
-      MODIFIER="add"
-      MODIFICATION_VALUES+=("'subject':'$SUBJECT_STRING'")
-      MODIFICATION_VALUES+=("'project_id':$PROJECT_ID")
-      MODIFICATION_VALUES+=("'tracker_id':4")
-      if [ -n "$IDS" ] && [ "$(wc -l <<<"$IDS")" -eq 1 ];then
-        MODIFICATION_VALUES+=("'parent_issue_id':$IDS")
-      elif [ -n "$IDS" ];then
-        echo "cannot create task for many parents!" 1>&2
-        MODIFIER=""
-      fi
-
-    else
-      break
+  elif [ "$1" = "add" ]; then
+    shift
+    MODIFIER="add"
+    MODIFICATION_VALUES+=("'project_id':$PROJECT_ID")
+    #MODIFICATION_VALUES+=("'tracker_id':4")
+    if [ -n "$IDS" ] && [ "$(wc -l <<<"$IDS")" -eq 1 ];then
+      MODIFICATION_VALUES+=("'parent_issue_id':$IDS")
+    elif [ -n "$IDS" ];then
+      echo "cannot create task for many parents!" 1>&2
+      MODIFIER=""
     fi
-  else
-    break
-  fi
-done
 
-FINAL_MODIFICATION_STRING=""
-for I in "${MODIFICATION_VALUES[@]}"; do
-  if [ -z "$FINAL_MODIFICATION_STRING" ];then
-    FINAL_MODIFICATION_STRING="$I"
-  else
-    FINAL_MODIFICATION_STRING+=",$I"
-  fi
-done
-
-case "$MODIFIER" in
-  "" | "nop")
-    #echo "NOP modifier" 1>&2
-    ;;
-
-  "mo")
-    #echo "$FINAL_MODIFICATION_STRING"
-    load_json_content_of_ids
+  elif [ "$1" = "done" ]; then
+    shift
     for ID in $IDS; do
-      JSON=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")
-      LOCAL_FINAL_MODIFICATION_STRING="$FINAL_MODIFICATION_STRING"
-      if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-        if [ -n "$LOCAL_FINAL_MODIFICATION_STRING" ];then
-          LOCAL_FINAL_MODIFICATION_STRING+=","
-        fi
-        LOCAL_FINAL_MODIFICATION_STRING+="$(modifier_string_for_custom_json "$JSON" "$CUSTOM_JSON_MODIFIER")"
-      fi
-      write_issue $ID "$LOCAL_FINAL_MODIFICATION_STRING"
+      write_issue $ID "'status_id':'5'"
     done
-    ;;
 
-  "add")
-    #echo "ADD !!!! modifier" 1>&2
-    echo "$FINAL_MODIFICATION_STRING" |\
-    sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
-    curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
-    jq '.issue.id'
-    ;;
+  elif [ "$1" = "reject" ]; then
+    shift
+    for ID in $IDS; do
+      write_issue $ID "'status_id':'6'"
+    done
 
-  *)
-    ;;
-esac
+  elif [ "$1" = "blocked" ]; then
+    shift
+    for ID in $IDS; do
+      write_issue $ID "'status_id':'4'"
+    done
+
+  elif [ "$1" = "doing" ]; then
+    shift
+    for ID in $IDS; do
+      write_issue $ID "'status_id':'2'"
+    done
+
+  elif [ "$1" = "delete" ]; then
+    shift
+    for ID in $IDS; do
+      curl -X DELETE -s -3 "https://$SERVER/issues/$ID.json?key=$KEY"
+    done
+
+  fi
+
+  if [ -n "$MODIFIER" ];then
+
+    while true;do
+      if [ "$#" -ge 1 ]; then
+
+        if [ "$1" = "append" ]; then
+          shift
+          APPEND=1
+
+        elif [ "$1" = "task" ]; then
+          shift
+          #TODO: delete old tracker id of MODIFICATION_VALUES
+          MODIFICATION_VALUES+=("'tracker_id':4")
+
+        elif [ "$1" = "feature" ]; then
+          shift
+          #TODO: delete old tracker id of MODIFICATION_VALUES
+          MODIFICATION_VALUES+=("'tracker_id':2")
+
+        elif [ $(echo "$1" | grep "\<total:[0-9]*\>") ]; then
+          TOTAL_TIME=$(echo "$1" | sed 's/^total://g')
+          shift
+          MODIFICATION_VALUES+=("'remaining_hours':$TOTAL_TIME")
+          MODIFICATION_VALUES+=("'estimated_hours':$TOTAL_TIME")
+
+        elif [ $(echo "$1" | grep "\<remaining:[0-9]*\>") ]; then
+          REMAINING_HOURS=$(echo "$1" | sed 's/^remaining://g')
+          shift
+          MODIFICATION_VALUES+=("'remaining_hours':$REMAINING_HOURS")
+
+        elif [ $(echo "$1" | grep "\<estimate:[0-9]*\>") ]; then
+          ESTIMATED_HOURS=$(echo "$1" | sed 's/^estimate://g')
+          shift
+          MODIFICATION_VALUES+=("'estimated_hours':$ESTIMATED_HOURS")
+
+        elif [ $(echo "$1" | grep "\<version:[0-9]*\>") ]; then
+          VERSION=$(echo "$1" | sed 's/^version://g')
+          shift
+          MODIFICATION_VALUES+=("'fixed_version_id':$VERSION")
+
+        elif [ "$1" = "unassign" ]; then
+          shift
+          MODIFICATION_VALUES+=("'assigned_to_id':null")
+
+        elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
+          OWNER=$(echo "$1" | sed 's/^assign://g')
+          shift
+          MODIFICATION_VALUES+=("'assigned_to_id':$OWNER")
+
+        elif [ $(echo "$1" | grep "\<assign:[a-zA-Z0-9_-]*\>") ]; then
+          USER_STRING="$(echo "$1" | sed 's/^assign://g')"
+          shift
+          MATCHING_USER_ID="$(project_member_by_name $USER_STRING)"
+          if [ -n "$MATCHING_USER_ID" ];then
+            MODIFICATION_VALUES+=("'assigned_to_id':$MATCHING_USER_ID")
+          else
+            echo "no or more than one user with:'$USER_STRING' was found." 1>&2
+          fi
+
+        elif [ $(echo "$1" | grep "\<parent:[0-9]*\>") ]; then
+          PARENT="$(echo "$1" | sed 's/^parent://g')"
+          shift
+          #TODO: what if parent is already defined
+          MODIFICATION_VALUES+=("'parent_issue_id':$PARENT")
+
+        #TODO: elif [ "$(echo "$1" | grep "\<subject+:.*")" ]; then
+        elif [ "$(echo "$1" | grep "\<subject:.*")" ]; then
+          SUBJECT_STRING="$(echo "$1" | sed -e 's/^subject://g')"
+          shift
+          MODIFICATION_VALUES+=("'subject':'$SUBJECT_STRING'")
+
+        elif [ $(echo "$1" | grep "\<complex:[0-9]*\>") ]; then
+          VALUE="$(echo "$1" | sed 's/^complex://g')"
+          shift
+          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+            CUSTOM_JSON_MODIFIER+="|"
+          fi
+          CUSTOM_JSON_MODIFIER+=".complexity=$VALUE"
+
+        elif [ $(echo "$1" | grep "\<inno:[0-9]*\>") ]; then
+          VALUE="$(echo "$1" | sed 's/^inno://g')"
+          shift
+          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+            CUSTOM_JSON_MODIFIER+="|"
+          fi
+          CUSTOM_JSON_MODIFIER+=".innovation=$VALUE"
+
+        elif [ "$(echo "$1" | grep "\+[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
+          TAG="$(echo "$1" | sed -e 's/^+//g')"
+          shift
+          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+            CUSTOM_JSON_MODIFIER+="|"
+          fi
+          CUSTOM_JSON_MODIFIER+=".tags+=[\"$TAG\"]"
+
+        elif [ "$(echo "$1" | grep "\-[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
+          TAG="$(echo "$1" | sed -e 's/^-//g')"
+          shift
+          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+            CUSTOM_JSON_MODIFIER+="|"
+          fi
+          CUSTOM_JSON_MODIFIER+=".tags-=[\"$TAG\"]"
+
+        elif [ "$(echo "$1" | grep "\<cjson:.*")" ]; then
+          VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^cjson://g')"
+          shift
+          #redtask 3277 cjson '.tags+=["hi"]'
+          #redtask 3277 cjson '.+{"c":4}'
+          #redtask 3277 cjson '.b=5'
+          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+            CUSTOM_JSON_MODIFIER+="|"
+          fi
+          CUSTOM_JSON_MODIFIER+="$VALUE_ARGUMENT"
+
+#        elif [ "$(echo "$1" | grep "\<key:[a-z]*:.*")" ]; then
+#          KEY_NAME="$(echo "$1" | sed -e 's/^key:\([a-z]*\):.*$/\1/g')"
+#          VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^key:[a-z]*:\(.*\)$/\1/g')"
+#          shift
+#          #TODO: append will not work when applying to several ids
+#          for ID in $IDS; do
+#            if [ -n "$APPEND" ]; then
+#              load_json_content_of_ids
+#              OLD_VALUE="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)|.$KEY_NAME")"
+#              NEW_VALUE="${OLD_VALUE} ${VALUE_ARGUMENT}"
+#            else
+#              NEW_VALUE="$VALUE_ARGUMENT"
+#            fi
+#            MODIFICATION_VALUES+=("'$KEY_NAME':'$NEW_VALUE'")
+#          done
+
+    #    elif [ "$1" = "json" ] && [ "$#" -ge 2 ]; then
+    #      VALUE_ARGUMENT="$2"
+    #      shift
+    #      shift
+    #      load_json_content_of_ids
+    #
+    #      for ID in $IDS
+    #      do
+    #        OLD_VALUE=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)|.description")
+    #        if [ -n "$APPEND" ]; then
+    #          if [ $(assert_json "$OLD_VALUE") ]; then
+    #            #redtask 3126 des "{\\\"hi\\\":4}"
+    #            # $2='.a="4" | .b=5'
+    #            if [ -z "$OLD_VALUE" ];then
+    #              #echo "old description was empty"
+    #              OLD_VALUE="{}"
+    #            fi
+    #            NEW_VALUE=$(echo "$OLD_VALUE" | jq -c "$VALUE_ARGUMENT" | sed -e 's/"/\\\"/g')
+    #            write_issue $ID "'description':'$NEW_VALUE'"
+    #          else
+    #            echo "old description was not a json content"
+    #          fi
+    #        else
+    #          NEW_VALUE=$(echo "$VALUE_ARGUMENT" | sed -e 's/"/\\\"/g')
+    #          write_issue $ID "'description':'$NEW_VALUE'"
+    #        fi
+    #      done
+
+        else
+          break
+        fi
+      else
+        break
+      fi
+    done
+
+    FINAL_MODIFICATION_STRING=""
+    for I in "${MODIFICATION_VALUES[@]}"; do
+      if [ -z "$FINAL_MODIFICATION_STRING" ];then
+        FINAL_MODIFICATION_STRING="$I"
+      else
+        FINAL_MODIFICATION_STRING+=",$I"
+      fi
+    done
+
+    case "$MODIFIER" in
+      "mo")
+        #echo "$FINAL_MODIFICATION_STRING"
+        load_json_content_of_ids
+        for ID in $IDS; do
+          JSON=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")
+          LOCAL_FINAL_MODIFICATION_STRING="$FINAL_MODIFICATION_STRING"
+          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+            if [ -n "$LOCAL_FINAL_MODIFICATION_STRING" ];then
+              LOCAL_FINAL_MODIFICATION_STRING+=","
+            fi
+            LOCAL_FINAL_MODIFICATION_STRING+="$(modifier_string_for_custom_json "$JSON" "$CUSTOM_JSON_MODIFIER")"
+          fi
+          write_issue $ID "$LOCAL_FINAL_MODIFICATION_STRING"
+        done
+        ;;
+
+      "add")
+        #echo "ADD !!!! modifier" 1>&2
+        echo "$FINAL_MODIFICATION_STRING" |\
+        sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
+        curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
+        jq '.issue.id'
+        ;;
+    esac
+
+  fi
+fi
 
