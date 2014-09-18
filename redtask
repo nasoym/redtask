@@ -30,6 +30,7 @@ fi
 ALL_TASKS_JSON=""
 IDS=""
 
+source $SCRIPT_PATH/_redtask_collections
 source $SCRIPT_PATH/_redtask_filters
 source $SCRIPT_PATH/_redtask_operations
 source $SCRIPT_PATH/_redtask_print

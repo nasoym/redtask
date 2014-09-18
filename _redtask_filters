@@ -2,46 +2,45 @@
 
 while true;do
   if [ "$#" -ge 1 ]; then
-    if [ $(echo "$1" | grep "^[0-9]*\(,[0-9]*\)*$") ]; then
-      IDS=$(echo "$1" | tr ',' '\n')
-      shift
 
-    elif [ $(echo "$1" | grep "ids:[a-zA-Z0-9_-]\{1,\}") ]; then
-      VARIABLE_NAME=$(echo "$1" | sed 's/^ids://g')
-      shift
-      #TODO: how to append to existing id list
-      IDS="$(eval $VARIABLE_NAME)"
-
-    elif [ $(echo "$1" | grep "json:stdin") ]; then
-      shift
-      #TODO: how to append exisiting json
-      ALL_TASKS_JSON="$(cat)"
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
-      ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
-
-    elif [ $(echo "$1" | grep "json:[a-zA-Z0-9_-]\{1,\}") ]; then
-      VARIABLE_NAME=$(echo "$1" | sed 's/^json://g')
-      shift
-      #TODO: how to append exisiting json
-      ALL_TASKS_JSON="$(eval $VARIABLE_NAME)"
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
-      ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
-
-    elif [ $(echo "$1" | grep "filter:[a-zA-Z0-9_-]\{1,\}") ]; then
+    if [ $(echo "$1" | grep "filter:[a-zA-Z0-9_-]\{1,\}") ]; then
       VARIABLE_NAME=$(echo "$1" | sed 's/^filter://g')
       shift
       load_json_content_of_ids
       ALL_TASKS_JSON="$(eval $VARIABLE_NAME)"
 
+    elif [ $(echo "$1" | grep "tags:\[.*\]$") ]; then
+      FILTER_TAGS=$(echo "$1" | sed 's/^tags:\[\(.*\)\]$/\1/g')
+      shift
+      load_json_content_of_ids
+      FILTER_TAGS=$(echo "$FILTER_TAGS" | tr ',' '\n')
+      for TAG in $FILTER_TAGS; do
+        if [[ $TAG =~ ^\+.*$ ]]; then
+          TAG=$(echo "$TAG" | sed 's/^\+//g')
+          ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+          jq -c "[.[]|\
+          select( (.cjson.tags!=null) and (.cjson.tags|contains([\"$TAG\"])) )\
+          ]" )
+        elif [[ $TAG =~ ^-.*$ ]]; then
+          TAG=$(echo "$TAG" | sed 's/^-//g')
+          ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+          jq -c "[.[]|\
+          select( (.cjson.tags==null) or (.cjson.tags|contains([\"$TAG\"])|not) )\
+          ]" )
+        fi
+      done
+
     elif [ $(echo "$1" | grep "\<assigned:[0-9]*\>") ]; then
       USER_ID=$(echo "$1" | sed 's/^assigned://g')
       shift
+      load_json_content_of_ids
       #TODO: how to provide a list of assignees
       ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.assigned_to.id==$USER_ID)]" )
 
     elif [ $(echo "$1" | grep "\<assigned:[a-zA-Z0-9_-]*\>") ]; then
       USER_STRING=$(echo "$1" | sed 's/^assigned://g')
       shift
+      load_json_content_of_ids
       #TODO: how to provide a list of assignees
       MATCHING_USER_ID="$(project_member_by_name $USER_STRING)"
       if [ -n "$MATCHING_USER_ID" ];then
@@ -50,6 +49,7 @@ while true;do
 
     elif [[ $1 =~ ^hier($|(a$|ar$|arc$|arch$|archy$)) ]] || [ "$1" = "hrchy" ]; then
       shift
+      load_json_content_of_ids
       #TODO: what to do with issues whos parent is not in the json structure
       #TODO: what to do with grandchildren
       #TODO: what to do when the children structure is already filled in the minimal form
