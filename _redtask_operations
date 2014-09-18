@@ -251,9 +251,14 @@ if [ "$#" -ge 1 ]; then
         ;;
 
       "add")
-        #echo "ADD !!!! modifier" 1>&2
-        #TODO: add custom json modifiers
-        echo "$FINAL_MODIFICATION_STRING" |\
+        LOCAL_FINAL_MODIFICATION_STRING="$FINAL_MODIFICATION_STRING"
+        if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+          if [ -n "$LOCAL_FINAL_MODIFICATION_STRING" ];then
+            LOCAL_FINAL_MODIFICATION_STRING+=","
+          fi
+          LOCAL_FINAL_MODIFICATION_STRING+="$(modifier_string_for_custom_json "{}" "$CUSTOM_JSON_MODIFIER")"
+        fi
+        echo "$LOCAL_FINAL_MODIFICATION_STRING" |\
         sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
         curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
         jq '.issue.id'
