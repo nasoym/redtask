@@ -28,8 +28,9 @@ function print_command_details() {
     jq -r \
 "\"$LEADING_SPACES\
 \(.id)\
-[\(.done_ratio//\"-\")%:\(.story_points//\"-\")p]\
- \(.assigned_to.name//\"\"):\
+ [\(.done_ratio//\"-\")%:\(.story_points//\"-\")p]\
+\(if (.cjson.tags != null) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
+\(if (.assigned_to.name!=null) then \" \(.assigned_to.name)\" else \"\" end):\
  \\\"\(.subject)\\\"\
 \"" |\
     sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
@@ -42,9 +43,9 @@ function print_command_details() {
     jq -r \
 "\"$LEADING_SPACES\
 \(.id)\
- [\(.done_ratio//\"-\")%:\(.estimated_hours//\"-\")h]\
+ [\(.estimated_hours//\"-\")]\
 \(if (.cjson.tags != null) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
- \(.assigned_to.name//\"\"):\
+\(if (.assigned_to.name!=null) then \" \(.assigned_to.name)\" else \"\" end):\
  \\\"\(.subject)\\\"\
 \"" |\
     sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
@@ -71,51 +72,62 @@ function json_line_print(){
   done
 }
 
-if [ "$#" -ge 1 ]; then
-  if [ $(echo "$1" | grep "lines:[a-zA-Z0-9_-]*") ]; then
-    PRINT_COMMAND=$(echo "$1" | sed 's/^lines://g')
-    shift
-    if [ -z "$PRINT_COMMAND" ]; then
-      PRINT_COMMAND="print_command_details"
-    fi
-    load_json_content_of_ids
-    for TASK_JSON in $( echo "$ALL_TASKS_JSON" | jq -c '.[]' ); do
-      json_line_print "$TASK_JSON" "$PRINT_COMMAND"
-    done
-
-  elif [ "$1" = "pretty" ]; then
-    shift
-    load_json_content_of_ids
-    echo "$ALL_TASKS_JSON" | jq '.'
-
-  elif [ "$1" = "json" ]; then
-    shift
-    load_json_content_of_ids
-    echo "$ALL_TASKS_JSON"
-
-  elif [ "$1" = "ids" ]; then
-    shift
-    echo "$IDS"
-
-  elif [ "$1" = "csids" ]; then
-    shift
-    COMMA_SEPARATED_IDS=""
-    for ID in $IDS; do
-      if [ -z "$COMMA_SEPARATED_IDS" ];then
-        COMMA_SEPARATED_IDS="$ID"
-      else
-        COMMA_SEPARATED_IDS+=",$ID"
+while true;do
+  if [ "$#" -ge 1 ]; then
+    if [ $(echo "$1" | grep "lines:[a-zA-Z0-9_-]*") ]; then
+      PRINT_COMMAND=$(echo "$1" | sed 's/^lines://g')
+      shift
+      if [ -z "$PRINT_COMMAND" ]; then
+        PRINT_COMMAND="print_command_details"
       fi
-    done
-    echo "$COMMA_SEPARATED_IDS"
+      load_json_content_of_ids
+      for TASK_JSON in $( echo "$ALL_TASKS_JSON" | jq -c '.[]' ); do
+        json_line_print "$TASK_JSON" "$PRINT_COMMAND"
+      done
 
-  elif [ $(echo "$1" | grep "print:[a-zA-Z0-9_-]\{1,\}") ]; then
-    VARIABLE_NAME=$(echo "$1" | sed 's/^print://g')
-    shift
-    eval $VARIABLE_NAME
+    elif [ "$1" = "report" ]; then
+      shift
+      load_json_content_of_ids
+      TOTAL_ESTIMATED=$(echo "$ALL_TASKS_JSON" | jq '[.[] | .estimated_hours] | add')
+      echo "total estimated hours: $TOTAL_ESTIMATED"
 
+    elif [ "$1" = "pretty" ]; then
+      shift
+      load_json_content_of_ids
+      echo "$ALL_TASKS_JSON" | jq '.'
+
+    elif [ "$1" = "json" ]; then
+      shift
+      load_json_content_of_ids
+      echo "$ALL_TASKS_JSON"
+
+    elif [ "$1" = "ids" ]; then
+      shift
+      echo "$IDS"
+
+    elif [ "$1" = "csids" ]; then
+      shift
+      COMMA_SEPARATED_IDS=""
+      for ID in $IDS; do
+        if [ -z "$COMMA_SEPARATED_IDS" ];then
+          COMMA_SEPARATED_IDS="$ID"
+        else
+          COMMA_SEPARATED_IDS+=",$ID"
+        fi
+      done
+      echo "$COMMA_SEPARATED_IDS"
+
+    elif [ $(echo "$1" | grep "print:[a-zA-Z0-9_-]\{1,\}") ]; then
+      VARIABLE_NAME=$(echo "$1" | sed 's/^print://g')
+      shift
+      eval $VARIABLE_NAME
+
+    else
+      break
+    fi
+  else
+    break
   fi
-else
-  echo "$IDS"
-fi
+done
+
 
