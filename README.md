@@ -3,7 +3,9 @@
 This repository contains a bash command line tool which can interact with the redmine API,
 in order to create and modify issues.
 
-In order to run this tool please install [jq](http://stedolan.github.io/jq/)
+### Dependencies
+
+In order to run this tool you must install [jq](http://stedolan.github.io/jq/).
 
 ## Usage
 
