@@ -9,36 +9,31 @@ while true;do
       load_json_content_of_ids
       ALL_TASKS_JSON="$(eval $VARIABLE_NAME)"
 
-    elif [ $(echo "$1" | grep "tags:\[.*\]$") ]; then
-      FILTER_TAGS=$(echo "$1" | sed 's/^tags:\[\(.*\)\]$/\1/g')
+    elif [ "$(echo "$1" | grep "\+[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
+      TAG="$(echo "$1" | sed -e 's/^+//g')"
       shift
-      load_json_content_of_ids
-      FILTER_TAGS=$(echo "$FILTER_TAGS" | tr ',' '\n')
-      for TAG in $FILTER_TAGS; do
-        if [[ $TAG =~ ^\+.*$ ]]; then
-          TAG=$(echo "$TAG" | sed 's/^\+//g')
-          ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
-          jq -c "[.[]|\
-          select( (.cjson.tags!=null) and (.cjson.tags|contains([\"$TAG\"])) )\
-          ]" )
-        elif [[ $TAG =~ ^-.*$ ]]; then
-          TAG=$(echo "$TAG" | sed 's/^-//g')
-          ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
-          jq -c "[.[]|\
-          select( (.cjson.tags==null) or (.cjson.tags|contains([\"$TAG\"])|not) )\
-          ]" )
-        fi
-      done
+      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+      jq -c "[.[]|\
+      select( (.cjson.tags!=null) and (.cjson.tags|contains([\"$TAG\"])) )\
+      ]" )
 
-    elif [ $(echo "$1" | grep "\<assigned:[0-9]*\>") ]; then
-      USER_ID=$(echo "$1" | sed 's/^assigned://g')
+    elif [ "$(echo "$1" | grep "\-[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
+      TAG="$(echo "$1" | sed -e 's/^-//g')"
+      shift
+      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+      jq -c "[.[]|\
+      select( (.cjson.tags==null) or (.cjson.tags|contains([\"$TAG\"])|not) )\
+      ]" )
+
+    elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
+      USER_ID=$(echo "$1" | sed 's/^assign://g')
       shift
       load_json_content_of_ids
       #TODO: how to provide a list of assignees
       ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.assigned_to.id==$USER_ID)]" )
 
-    elif [ $(echo "$1" | grep "\<assigned:[a-zA-Z0-9_-]*\>") ]; then
-      USER_STRING=$(echo "$1" | sed 's/^assigned://g')
+    elif [ $(echo "$1" | grep "\<assign:[a-zA-Z0-9_-]*\>") ]; then
+      USER_STRING=$(echo "$1" | sed 's/^assign://g')
       shift
       load_json_content_of_ids
       #TODO: how to provide a list of assignees
