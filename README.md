@@ -1,6 +1,9 @@
 # RedTask
 
-This repository contains a command line tool which can interact with redmine issues.
+This repository contains a bash command line tool which can interact with the redmine API,
+in order to create and modify issues.
+
+In order to run this tool please install [jq](http://stedolan.github.io/jq/)
 
 ## Usage
 
