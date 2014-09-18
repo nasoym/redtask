@@ -41,6 +41,17 @@ while true;do
         curl -X DELETE -s -3 "https://$SERVER/issues/$ID.json?key=$KEY"
       done
 
+    elif [ $(echo "$1" | grep "\<total:[0-9]*\>") ]; then
+      TOTAL_TIME=$(echo "$1" | sed 's/^total://g')
+      shift
+      MODIFICATION_VALUES+=("'remaining_hours':$TOTAL_TIME")
+      MODIFICATION_VALUES+=("'estimated_hours':$TOTAL_TIME")
+
+    elif [ $(echo "$1" | grep "\<remaining:[0-9]*\>") ]; then
+      REMAINING_HOURS=$(echo "$1" | sed 's/^remaining://g')
+      shift
+      MODIFICATION_VALUES+=("'remaining_hours':$REMAINING_HOURS")
+
     elif [ $(echo "$1" | grep "\<estimate:[0-9]*\>") ]; then
       ESTIMATED_HOURS=$(echo "$1" | sed 's/^estimate://g')
       shift
@@ -50,6 +61,10 @@ while true;do
       VERSION=$(echo "$1" | sed 's/^version://g')
       shift
       MODIFICATION_VALUES+=("'fixed_version_id':$VERSION")
+
+    elif [ "$1" = "unassign" ]; then
+      shift
+      MODIFICATION_VALUES+=("'assigned_to_id':null")
 
     elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
       OWNER=$(echo "$1" | sed 's/^assign://g')
