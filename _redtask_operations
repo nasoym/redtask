@@ -112,6 +112,11 @@ if [ "$#" -ge 1 ]; then
             echo "no or more than one user with:'$USER_STRING' was found." 1>&2
           fi
 
+        elif [ $(echo "$1" | grep "\<release:[0-9]*\>") ]; then
+          RELEASE_ID="$(echo "$1" | sed 's/^release://g')"
+          shift
+          MODIFICATION_VALUES+=("'release_id':$RELEASE_ID")
+
         elif [ $(echo "$1" | grep "\<parent:[0-9]*\>") ]; then
           PARENT="$(echo "$1" | sed 's/^parent://g')"
           shift
@@ -247,6 +252,7 @@ if [ "$#" -ge 1 ]; then
 
       "add")
         #echo "ADD !!!! modifier" 1>&2
+        #TODO: add custom json modifiers
         echo "$FINAL_MODIFICATION_STRING" |\
         sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
         curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
