@@ -29,6 +29,7 @@ function print_command_details() {
 "\"$LEADING_SPACES\
 \(.id)\
  [\(.done_ratio//\"-\")%:\(.story_points//\"-\")p]\
+\(if (.release.release.name!=null) then \" \(.release.release.name)(\(.release.release.id))\" else \"\" end)\
 \(if (.cjson.tags != null) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
 \(if (.assigned_to.name!=null) then \" \(.assigned_to.name)\" else \"\" end):\
  \\\"\(.subject)\\\"\
