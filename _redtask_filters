@@ -3,7 +3,19 @@
 while true;do
   if [ "$#" -ge 1 ]; then
 
-    if [ $(echo "$1" | grep "filter:[a-zA-Z0-9_-]\{1,\}") ]; then
+    if [ "$1" = "feature" ]; then
+      shift
+      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+      jq -c "[.[]| select(.tracker.id == 2) ]" )
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+
+    elif [ "$1" = "task" ]; then
+      shift
+      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+      jq -c "[.[]| select(.tracker.id == 4) ]" )
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+
+    elif [ $(echo "$1" | grep "filter:[a-zA-Z0-9_-]\{1,\}") ]; then
       VARIABLE_NAME=$(echo "$1" | sed 's/^filter://g')
       shift
       load_json_content_of_ids
@@ -26,6 +38,12 @@ while true;do
       jq -c "[.[]|\
       select( (.cjson.tags==null) or (.cjson.tags|contains([\"$TAG\"])|not) )\
       ]" )
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+
+    elif [ "$1" = "unassign" ]; then
+      shift
+      load_json_content_of_ids
+      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.assigned_to==null)]" )
       IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
 
     elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
