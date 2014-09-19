@@ -129,16 +129,16 @@ if [ "$#" -ge 1 ]; then
           shift
           MODIFICATION_VALUES+=("'subject':'$SUBJECT_STRING'")
 
-        elif [ $(echo "$1" | grep "\<complex:[0-9]*\>") ]; then
-          VALUE="$(echo "$1" | sed 's/^complex://g')"
+        elif [ $(echo "$1" | grep "\<clx:[0-9]*\>") ]; then
+          VALUE="$(echo "$1" | sed 's/^clx://g')"
           shift
           if [ -n "$CUSTOM_JSON_MODIFIER" ];then
             CUSTOM_JSON_MODIFIER+="|"
           fi
           CUSTOM_JSON_MODIFIER+=".complexity=$VALUE"
 
-        elif [ $(echo "$1" | grep "\<inno:[0-9]*\>") ]; then
-          VALUE="$(echo "$1" | sed 's/^inno://g')"
+        elif [ $(echo "$1" | grep "\<ino:[0-9]*\>") ]; then
+          VALUE="$(echo "$1" | sed 's/^ino://g')"
           shift
           if [ -n "$CUSTOM_JSON_MODIFIER" ];then
             CUSTOM_JSON_MODIFIER+="|"
