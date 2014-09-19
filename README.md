@@ -43,3 +43,16 @@ In order to run this tool you must install [jq](http://stedolan.github.io/jq/).
 
     lines
         print a line for each issue
+
+
+### hints
+
+#### recover lost data from journals
+      redtask json:backlog feature load_details pretty >all_features.json
+      cat all_features.json | jq -r -c '.[] | "{\"id\":\(.id),\"payload\":\([.journals[] | .details[0].new_value | select(contains("deliverable")) ] | .[-1:]|.[])},"' > lost_values.json
+      cat lost_values.json | jq 'map( del(.payload.tags))' > cleand_lost.json
+      cat cleand_lost.json  | jq 'map(.deliverable=.payload.deliverable |.requirements=.payload.requirements) | map(del(.payload))' > lost3.json
+      cat lost3.json | jq -r '.[]|"redtask \(.id) mo deliver:\"\(.deliverable)\""' >commands
+      sh commands
+      cat lost3.json | jq -r '.[]|"redtask \(.id) mo require:\"\(.requirements)\""' > commands
+      sh commands
