@@ -24,6 +24,7 @@ function load_json_of_ids() {
         CHILD_IDS=$(echo "$TASK_JSON" | jq -r ".children[] | .id")
         if [ -n "$CHILD_IDS" ];then
           CHILD_TASKS_JSON="$(load_json_of_ids "$CHILD_IDS" $NEXT_DEPTH)"
+          CHILD_TASKS_JSON="$(parse_custom_json_field "$CHILD_TASKS_JSON" "$CHILD_IDS")"
           TASK_JSON=$(echo "$TASK_JSON" | jq -c ".children=$CHILD_TASKS_JSON")
         fi
       fi
