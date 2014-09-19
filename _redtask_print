@@ -164,8 +164,50 @@ while true;do
     elif [ "$1" = "report" ]; then
       shift
       load_json_content_of_ids
-      TOTAL_ESTIMATED=$(echo "$ALL_TASKS_JSON" | jq '[.[] | .estimated_hours] | add')
-      echo "total estimated hours: $TOTAL_ESTIMATED"
+      #TOTAL_ESTIMATED=$(echo "$ALL_TASKS_JSON" | jq '[.[] | .estimated_hours] | add')
+      #TOTAL_ESTIMATED=$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | .estimated_hours]')
+      #echo "total estimated hours: $TOTAL_ESTIMATED"
+      TOTAL_HOURS="0 "
+      TOTAL_HOURS_WITH_FACTOR="0 "
+      for TASK_JSON in $( echo "$ALL_TASKS_JSON" | jq -c '.[]' ); do
+        ID=$(echo "$TASK_JSON" | jq '.id')
+        HOURS=$(echo "$TASK_JSON" | jq '.estimated_hours//0')
+        COMPLEXITY=$(echo "$TASK_JSON" | jq '.cjson.complexity//0')
+        INNOVATION=$(echo "$TASK_JSON" | jq '.cjson.innovation//0')
+        PAIRING=$(echo "$TASK_JSON" | jq '.cjson.pairing//0')
+
+        #echo "------------------------------"
+        #echo "HOURS:>$HOURS<"
+        #echo "COMPLEXITY:>$COMPLEXITY<"
+        #echo "INNOVATION:>$INNOVATION<"
+        #echo "PAIRING:>$PAIRING<"
+
+        PAIRING_FACTOR=$( echo "1 + $PAIRING / 2" | bc -ql)
+        #echo "PAIRING_FACTOR:>$PAIRING_FACTOR<"
+        RISK_SELECTOR=$(( COMPLEXITY * 3 + INNOVATION ))
+        #echo "RISK_SELECTOR:>$RISK_SELECTOR<"
+
+        RISK_TABLE="[1.1637223975, 1.1980530973, 1.9808695652, 1.5203299941, 1.5320987654, 1.8945454545, 1.7795275591, 1.3245614035, 2.3448275862]"
+        #RISK_TABLE="[10,20,30,40,50,60,70,80,90]"
+        RISK_FACTOR=$(echo "$RISK_TABLE" | jq -r -c ".[$RISK_SELECTOR]")
+        #echo "RISK_FACTOR:>$RISK_FACTOR<"
+
+        FINAL_HOURS=$( echo "scale=2; $RISK_FACTOR * $PAIRING_FACTOR * $HOURS" | bc -ql)
+        #echo "FINAL_HOURS:>$FINAL_HOURS<"
+
+        FINAL_HOURS_SHORT=$(printf "%0.1f\n" $FINAL_HOURS)
+        #echo "FINAL_HOURS_SHORT:>$FINAL_HOURS_SHORT<"
+        echo "$ID: ($HOURS) : $FINAL_HOURS_SHORT"
+        TOTAL_HOURS+=" + $HOURS"
+        TOTAL_HOURS_WITH_FACTOR+=" + $FINAL_HOURS_SHORT"
+      done
+
+      TOTAL_HOURS=$( echo "$TOTAL_HOURS" | bc )
+      TOTAL_HOURS_WITH_FACTOR=$( echo "$TOTAL_HOURS_WITH_FACTOR" | bc )
+      #echo "TOTAL_HOURS:>$TOTAL_HOURS<"
+      #echo "TOTAL_HOURS_WITH_FACTOR:>$TOTAL_HOURS_WITH_FACTOR<"
+
+      echo "    : ($TOTAL_HOURS) :$TOTAL_HOURS_WITH_FACTOR"
 
     elif [ "$1" = "pretty" ]; then
       shift
