@@ -83,6 +83,11 @@ if [ "$#" -ge 1 ]; then
           shift
           MODIFICATION_VALUES+=("'remaining_hours':$REMAINING_HOURS")
 
+        elif [ $(echo "$1" | grep "\<points:[0-9]*\>") ]; then
+          STORY_POINTS=$(echo "$1" | sed 's/^points://g')
+          shift
+          MODIFICATION_VALUES+=("'story_points':$STORY_POINTS")
+
         elif [ $(echo "$1" | grep "\<estimate:[0-9]*\>") ]; then
           ESTIMATED_HOURS=$(echo "$1" | sed 's/^estimate://g')
           shift
@@ -128,6 +133,32 @@ if [ "$#" -ge 1 ]; then
           SUBJECT_STRING="$(echo "$1" | sed -e 's/^subject://g')"
           shift
           MODIFICATION_VALUES+=("'subject':'$SUBJECT_STRING'")
+
+        #elif [ "$(echo "$1" | grep "\<deliverable:.*")" ]; then
+        #  STRING="$(echo "$1" | sed -e 's/^deliverable://g')"
+        elif [ "$(echo "$1" | grep "\<deliver:.*")" ]; then
+          STRING="$(echo "$1" | sed -e 's/^deliver://g')"
+          shift
+          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+            CUSTOM_JSON_MODIFIER+="|"
+          fi
+          CUSTOM_JSON_MODIFIER+=".deliverable=\"$STRING\""
+
+        elif [ "$(echo "$1" | grep "\<require:.*")" ]; then
+          STRING="$(echo "$1" | sed -e 's/^require://g')"
+          shift
+          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+            CUSTOM_JSON_MODIFIER+="|"
+          fi
+          CUSTOM_JSON_MODIFIER+=".requirements=\"$STRING\""
+
+        elif [ $(echo "$1" | grep "\<pair:[0-9]*\>") ]; then
+          VALUE="$(echo "$1" | sed 's/^pair://g')"
+          shift
+          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+            CUSTOM_JSON_MODIFIER+="|"
+          fi
+          CUSTOM_JSON_MODIFIER+=".pairing=$VALUE"
 
         elif [ $(echo "$1" | grep "\<clx:[0-9]*\>") ]; then
           VALUE="$(echo "$1" | sed 's/^clx://g')"
