@@ -42,7 +42,7 @@ function load_json_of_ids() {
 
 function load_json_content_of_ids() {
   if [ -z "$ALL_TASKS_JSON" ] && [ -n "$IDS" ];then
-    echo " load json of ids" 1>&2
+    #echo " load json of ids" 1>&2
     ALL_TASKS_JSON="$(load_json_of_ids "$IDS" $CHILD_DEPTH)"
     ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
   elif [ -z "$ALL_TASKS_JSON" ] && [ -z "$IDS" ];then
@@ -69,7 +69,7 @@ function modifier_string_for_custom_json() {
     fi
   else
     local OLD_VALUE="{}"
-    echo "old description was not a json content!" 1>&2
+    #echo "old description was not a json content!" 1>&2
   fi
   local NEW_VALUE=$(echo "$OLD_VALUE" | jq -c "$JSON_MODIFICATION" | sed -e 's/"/\\\"/g')
   echo "'$CUSTOM_JSON_KEY':'$NEW_VALUE'"
