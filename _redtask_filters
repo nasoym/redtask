@@ -8,6 +8,7 @@ while true;do
       shift
       load_json_content_of_ids
       ALL_TASKS_JSON="$(eval $VARIABLE_NAME)"
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
 
     elif [ "$(echo "$1" | grep "\+[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
       TAG="$(echo "$1" | sed -e 's/^+//g')"
@@ -16,6 +17,7 @@ while true;do
       jq -c "[.[]|\
       select( (.cjson.tags!=null) and (.cjson.tags|contains([\"$TAG\"])) )\
       ]" )
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
 
     elif [ "$(echo "$1" | grep "\-[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
       TAG="$(echo "$1" | sed -e 's/^-//g')"
@@ -24,6 +26,7 @@ while true;do
       jq -c "[.[]|\
       select( (.cjson.tags==null) or (.cjson.tags|contains([\"$TAG\"])|not) )\
       ]" )
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
 
     elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
       USER_ID=$(echo "$1" | sed 's/^assign://g')
@@ -31,6 +34,7 @@ while true;do
       load_json_content_of_ids
       #TODO: how to provide a list of assignees
       ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.assigned_to.id==$USER_ID)]" )
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
 
     elif [ $(echo "$1" | grep "\<assign:[a-zA-Z0-9_-]*\>") ]; then
       USER_STRING=$(echo "$1" | sed 's/^assign://g')
@@ -41,6 +45,7 @@ while true;do
       if [ -n "$MATCHING_USER_ID" ];then
         ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.assigned_to.id==$MATCHING_USER_ID)]" )
       fi
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
 
     elif [[ $1 =~ ^hier($|(a$|ar$|arc$|arch$|archy$)) ]] || [ "$1" = "hrchy" ]; then
       shift
