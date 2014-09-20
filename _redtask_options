@@ -1,15 +1,12 @@
 #!/bin/bash
 
 PARSED_OPTIONS=""
-while getopts "c:p:" options; do
+while getopts "p:" options; do
   PARSED_OPTIONS="${PARSED_OPTIONS} -${options}${OPTARG}"
   # option for key, but cannot be provided as string because of 
   # history
   # option for server
   case $options in
-    c )
-        CHILD_DEPTH=$OPTARG
-        ;;
     p )
         PROJECT_ID=$OPTARG
         ;;

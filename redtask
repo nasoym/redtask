@@ -14,7 +14,6 @@ source $SCRIPT_PATH/_redtask_options
 
 : ${ISSUE_LIMIT:="400"}
 : ${USER_ID:="me"}
-: ${CHILD_DEPTH:=0}
 : ${CUSTOM_JSON_KEY:="description"}
 : ${CHILD_LEADING_SPACES:="    "}
 IFS=$'\n'
