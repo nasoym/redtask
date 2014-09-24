@@ -3,26 +3,43 @@
 while true; do
   if [ "$#" -ge 1 ]; then
 
-    if [ $(echo "$1" | grep "\<spent_time:[a-zA-Z0-9_-]*\>") ]; then
+    if [ $(echo "$1" | grep "^spent_time:[a-zA-Z0-9_-]*") ]; then
       USER_STRING=$(echo "$1" | sed 's/^spent_time://g')
       shift
-      MATCHING_USER_ID="$(project_member_by_name $USER_STRING)"
-      if [ -n "$MATCHING_USER_ID" ];then
+      if [ -z "$USER_STRING" ];then
+          DAYS_TO_SHOW=".[-4:]"
+          #if [ -n "${TIME_TO_SHOW}" ]; then
+          #  DAYS_TO_SHOW=".[-${TIME_TO_SHOW}:]"
+          #fi
+          curl -s -3 "https://$SERVER/projects/$PROJECT_ID/time_entries.json?limit=${ISSUE_LIMIT}&key=$KEY" |\
+          jq '.time_entries' |\
+          jq '. | sort_by(.spent_on)' |\
+          jq '. | group_by(.spent_on)' |\
+          jq "$DAYS_TO_SHOW" |\
+          jq -r -c '.[] | "\(.[0].spent_on)", (.[] | "    \(.issue.id): \(.hours): \"\(.comments//"")\""), "          \([.[] | .hours] | add)"' 
 
-        DAYS_TO_SHOW=".[-4:]"
-        #if [ -n "${TIME_TO_SHOW}" ]; then
-        #  DAYS_TO_SHOW=".[-${TIME_TO_SHOW}:]"
-        #fi
-        curl -s -3 "https://$SERVER/projects/$PROJECT_ID/time_entries.json?limit=${ISSUE_LIMIT}&key=$KEY&user_id=$MATCHING_USER_ID" |\
-        jq '.time_entries' |\
-        jq '. | sort_by(.spent_on)' |\
-        jq '. | group_by(.spent_on)' |\
-        jq "$DAYS_TO_SHOW" |\
-        jq -r -c '.[] | "\(.[0].spent_on)", (.[] | "    \(.issue.id): \(.hours): \"\(.comments//"")\""), "          \([.[] | .hours] | add)"' 
+          #jq -r -c '.[] | "\(.[0].spent_on)", (.[] | "    \(.issue.id) : \(.hours)    \(.comments//"")"), "    -----------\n           \([.[] | .hours] | add)"' 
 
-        #jq -r -c '.[] | "\(.[0].spent_on)", (.[] | "    \(.issue.id) : \(.hours)    \(.comments//"")"), "    -----------\n           \([.[] | .hours] | add)"' 
+          echo "$( date +%F) : today"
+      else
+        MATCHING_USER_ID="$(project_member_by_name $USER_STRING)"
+        if [ -n "$MATCHING_USER_ID" ];then
 
-        echo "$( date +%F) : today"
+          DAYS_TO_SHOW=".[-4:]"
+          #if [ -n "${TIME_TO_SHOW}" ]; then
+          #  DAYS_TO_SHOW=".[-${TIME_TO_SHOW}:]"
+          #fi
+          curl -s -3 "https://$SERVER/projects/$PROJECT_ID/time_entries.json?limit=${ISSUE_LIMIT}&key=$KEY&user_id=$MATCHING_USER_ID" |\
+          jq '.time_entries' |\
+          jq '. | sort_by(.spent_on)' |\
+          jq '. | group_by(.spent_on)' |\
+          jq "$DAYS_TO_SHOW" |\
+          jq -r -c '.[] | "\(.[0].spent_on)", (.[] | "    \(.issue.id): \(.hours): \"\(.comments//"")\""), "          \([.[] | .hours] | add)"' 
+
+          #jq -r -c '.[] | "\(.[0].spent_on)", (.[] | "    \(.issue.id) : \(.hours)    \(.comments//"")"), "    -----------\n           \([.[] | .hours] | add)"' 
+
+          echo "$( date +%F) : today"
+        fi
       fi
 
 #    elif [ $(echo "$1" | grep "^spent:[0-9]*$") ]; then
