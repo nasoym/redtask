@@ -57,6 +57,13 @@ function current() {
   jq -c '.issues[]')"
 }
 
+function current_done() {
+  local SPRINT_ID=$(current_sprint_id)
+  json_lines_to_json_array \
+  "$(curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&fixed_version_id=$SPRINT_ID&sort=status:desc&tracker_id=4" |\
+  jq -c '.issues[]')"
+}
+
 function backlog() {
   local SPRINT_ID=$(current_sprint_id)
   json_lines_to_json_array \
