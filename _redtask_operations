@@ -53,8 +53,16 @@ if [ "$#" -ge 1 ]; then
 
   elif [ "$1" = "delete" ]; then
     shift
+    load_json_content_of_ids
+    echo "delete ?:"
     for ID in $IDS; do
-      curl -X DELETE -s -3 "https://$SERVER/issues/$ID.json?key=$KEY"
+      JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
+      echo -n "$ID:$(echo "$JSON" | jq -r '.subject')"
+      read -p "   [y|n]" -n 1 -r CONFIRM
+      echo
+      if [[ "$CONFIRM" =~ ^(y|Y)$ ]]; then
+        curl -X DELETE -s -3 "https://$SERVER/issues/$ID.json?key=$KEY"
+      fi
     done
 
   elif [ "$1" = "subject_edit" ]; then
