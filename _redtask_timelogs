@@ -41,6 +41,69 @@ while true; do
           echo "$( date +%F) : today"
         fi
       fi
+    elif [ $(echo "$1" | grep "^spent_time_details") ]; then
+      PARAM_1=$(echo "$1" | sed -e 's/^spent_time_details//g' -e 's/^\(:[^:]*\):*.*$/\1/g' -e 's/^://g')
+      PARAM_2=$(echo "$1" | sed -e 's/^spent_time_details//g' -e 's/^:[^:]*\(:*.*\)$/\1/g' -e 's/^://g')
+      shift
+      DAYS_TO_SHOW="3"
+      COMMENT_FILTER=""
+      #echo "PARAM_1:>$PARAM_1<"
+      #echo "PARAM_2:>$PARAM_2<"
+      if [[ "$PARAM_1" =~ ^[0-9]+$ ]];then
+        #echo "param 1 one is weeks to show"
+        DAYS_TO_SHOW="$PARAM_1"
+      elif [ -n "$PARAM_1" ];then 
+        #echo "param 1 one filter"
+        COMMENT_FILTER="$PARAM_1"
+      fi
+      if [[ "$PARAM_2" =~ ^[0-9]+$ ]];then
+        #echo "param 2 one is weeks to show"
+        DAYS_TO_SHOW="$PARAM_2"
+      elif [ -n "$PARAM_2" ];then 
+        #echo "param 2 one filter"
+        COMMENT_FILTER="$PARAM_2"
+      fi
+      #echo "DAYS_TO_SHOW:>$DAYS_TO_SHOW<"
+      #echo "COMMENT_FILTER:>$COMMENT_FILTER<"
+      #exit 0
+      TIME_ENTRIES=$(curl -s -3 "https://$SERVER/projects/$PROJECT_ID/time_entries.json?limit=${ISSUE_LIMIT}&key=$KEY" |\
+      jq '.time_entries' |\
+      jq '. | sort_by(.spent_on)')
+
+      TIME_GROUPS=$(echo "$TIME_ENTRIES" | jq '. | group_by(.spent_on)' | jq -c ".[-$DAYS_TO_SHOW:]")
+      TIME_ENTRIES=$(echo "$TIME_GROUPS" | jq -c '[.[][]]')
+      if [ -n "$COMMENT_FILTER" ];then
+        TIME_ENTRIES=$(echo "$TIME_ENTRIES" | jq -c "map(select(.comments|contains(\"$COMMENT_FILTER\")))")
+      fi
+
+      IDS=$(echo "$TIME_GROUPS" | jq -r -c '.[][] | .issue.id' | sort | uniq)
+      #IDS=$(echo "$IDS" | sort | uniq)
+      load_json_content_of_ids
+      TIME_IDS=$(echo "$TIME_ENTRIES"| jq '.[] | .id')
+      for ID in $TIME_IDS;do
+        JSON=$(echo "$TIME_ENTRIES" | jq -r ".[]| select(.id==$ID)")
+        ISSUE_ID=$(echo "$JSON" | jq '.issue.id')
+        ISSUE_JSON=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ISSUE_ID)")
+        TIME_ENTRIES=$(echo "$TIME_ENTRIES" | jq -c -r "map(if(.id==$ID)then .issue_json=$ISSUE_JSON else . end)")
+      done
+
+      echo "$TIME_ENTRIES" |\
+      jq '. | group_by(.spent_on)' |\
+      jq -r -c ".[] | \
+\"\(.[0].spent_on)\",\
+(.[] |\
+\"    \(.issue.id): \(.hours): '\(.comments//\"\")'\
+: \(.issue_json.subject)\
+ (status:\(.issue_json.status.name))\
+ (estimate:\(.issue_json.estimated_hours))\
+\"\
+),\
+\"          \([.[] | .hours] | add)\"\
+" |\
+    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
+
+      echo "$( date +%F) : today"
+# \(.user.name)
 
 #    elif [ $(echo "$1" | grep "^spent:[0-9]*$") ]; then
 #      SPENT_HOURS=$(echo "$1" | sed 's/^spent://g')
