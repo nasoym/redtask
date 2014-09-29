@@ -65,6 +65,16 @@ if [ "$#" -ge 1 ]; then
       fi
     done
 
+  elif [ "$1" = "estimate_to_remaining" ]; then
+    shift
+    load_json_content_of_ids
+    for ID in $IDS; do
+      JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
+      ESTIMATED_HOURS="$(echo "$JSON" | jq -r '.estimated_hours')"
+      #echo "$ID:>$ESTIMATED_HOURS<"
+      write_issue $ID "'remaining_hours':$ESTIMATED_HOURS"
+    done
+
   elif [ "$1" = "subject_edit" ]; then
     shift
     load_json_content_of_ids
