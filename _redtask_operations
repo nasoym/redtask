@@ -120,8 +120,11 @@ if [ "$#" -ge 1 ]; then
           #TODO: delete old tracker id of MODIFICATION_VALUES
           MODIFICATION_VALUES+=("'tracker_id':2")
 
-        elif [ $(echo "$1" | grep "\<total:[0-9]*\>") ]; then
+        elif [ $(echo "$1" | grep "^total:[0-9]*$") ]; then
           TOTAL_TIME=$(echo "$1" | sed 's/^total://g')
+          if [ -z "$TOTAL_TIME" ];then
+            TOTAL_TIME="null"
+          fi
           shift
           MODIFICATION_VALUES+=("'remaining_hours':$TOTAL_TIME")
           MODIFICATION_VALUES+=("'estimated_hours':$TOTAL_TIME")
@@ -136,7 +139,7 @@ if [ "$#" -ge 1 ]; then
           shift
           MODIFICATION_VALUES+=("'story_points':$STORY_POINTS")
 
-        elif [ $(echo "$1" | grep "\<estimate:[0-9]*\>") ]; then
+        elif [ $(echo "$1" | grep "^estimate:[0-9]\+$") ]; then
           ESTIMATED_HOURS=$(echo "$1" | sed 's/^estimate://g')
           shift
           MODIFICATION_VALUES+=("'estimated_hours':$ESTIMATED_HOURS")
@@ -153,8 +156,11 @@ if [ "$#" -ge 1 ]; then
           shift
           MODIFICATION_VALUES+=("'assigned_to_id':null")
 
-        elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
+        elif [ $(echo "$1" | grep "^assign:[0-9]*$") ]; then
           OWNER=$(echo "$1" | sed 's/^assign://g')
+          if [ -z "$OWNER" ];then
+            OWNER="null"
+          fi
           shift
           MODIFICATION_VALUES+=("'assigned_to_id':$OWNER")
 
