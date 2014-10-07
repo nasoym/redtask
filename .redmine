@@ -64,6 +64,14 @@ function current_done() {
   jq -c '.issues[]')"
 }
 
+function done_today() {
+  local SPRINT_ID=$(current_sprint_id)
+  local DATE_FILTER=$(date +%F)
+  json_lines_to_json_array \
+  "$(curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&sort=status:desc&closed_on=$DATE_FILTER" |\
+  jq -c '.issues[]')"
+}
+
 function backlog() {
   local SPRINT_ID=$(current_sprint_id)
   json_lines_to_json_array \
