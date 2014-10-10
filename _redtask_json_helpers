@@ -6,10 +6,10 @@ function assert_json() {
 
 function json_lines_to_json_array() {
   local JSON_LINES="$1"
-  local JSON_ARRAY=""
+  local JSON_ARRAY="["
   for JSON in $JSON_LINES; do
-    if [ -z "$JSON_ARRAY" ];then
-      JSON_ARRAY="[$JSON"
+    if [ "$JSON_ARRAY" = "[" ];then
+      JSON_ARRAY+="$JSON"
     else
       JSON_ARRAY+=",$JSON"
     fi
