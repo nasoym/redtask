@@ -71,6 +71,17 @@ function done_today() {
   "$(curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&sort=status:desc&closed_on=$DATE_FILTER" |\
   jq -c '.issues[]')"
 }
+function done_yesterday() {
+  local SPRINT_ID=$(current_sprint_id)
+  if which gdate &>/dev/null;then
+    local DATE_FILTER=$(gdate -d "$(gdate +%F) -1 day" +%F)
+  else
+    local DATE_FILTER=$(date +%F)
+  fi
+  json_lines_to_json_array \
+  "$(curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&sort=status:desc&closed_on=$DATE_FILTER" |\
+  jq -c '.issues[]')"
+}
 
 function backlog() {
   local SPRINT_ID=$(current_sprint_id)
