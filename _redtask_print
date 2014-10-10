@@ -169,6 +169,17 @@ while true;do
         json_line_print "$TASK_JSON" "$PRINT_COMMAND"
       done
 
+    elif [ "$1" = "report_estimates" ]; then
+      shift
+      load_json_content_of_ids
+      TOTAL_HOURS="0 "
+      for TASK_JSON in $( echo "$ALL_TASKS_JSON" | jq -c '.[]' ); do
+        HOURS=$(echo "$TASK_JSON" | jq '.estimated_hours//0')
+        TOTAL_HOURS+=" + $HOURS"
+      done
+      TOTAL_HOURS=$( echo "$TOTAL_HOURS" | bc )
+      echo "    :[$TOTAL_HOURS]"
+
     elif [ "$1" = "report" ]; then
       shift
       load_json_content_of_ids
