@@ -15,6 +15,12 @@ while true;do
       jq -c "[.[]| select(.tracker.id == 4) ]" )
       IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
 
+    elif [ "$1" = "open" ]; then
+      shift
+      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+      jq -c "[.[]| select((.status.id != 5)and(.status.id!=6)) ]" )
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+
     elif [ $(echo "$1" | grep "filter:[a-zA-Z0-9_-]\{1,\}") ]; then
       VARIABLE_NAME=$(echo "$1" | sed 's/^filter://g')
       shift
