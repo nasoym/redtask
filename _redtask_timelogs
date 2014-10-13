@@ -131,17 +131,72 @@ while true; do
 #        echo
 #      done
 
-    elif [ $(echo "$1" | grep "^spent:[0-9.]*:[0-9]\{2\}-[0-9]\{2\}:.*$") ]; then
-      SPENT_HOURS=$(echo "$1" | sed 's/^spent:\(.*\):.*:.*$/\1/g')
-      SPENT_ON="$(date +%Y)-$(echo "$1" | sed 's/^spent:.*:\(.*\):.*$/\1/g')"
-      COMMENTS="$(echo "$1" | sed 's/^spent:.*:.*:\(.*\)$/\1/g')"
+    #elif [ $(echo "$1" | grep "^spent:[0-9.]*:[0-9]\{2\}-[0-9]\{2\}:.*$") ]; then
+    elif [ $(echo "$1" | grep "^spent:") ]; then
+      #SPENT_HOURS=$(echo "$1" | sed 's/^spent:\(.*\):.*:.*$/\1/g')
+      #SPENT_ON="$(date +%Y)-$(echo "$1" | sed 's/^spent:.*:\(.*\):.*$/\1/g')"
+      #COMMENTS="$(echo "$1" | sed 's/^spent:.*:.*:\(.*\)$/\1/g')"
+
+      PARAM_1=$(echo "$1" | sed -e 's/^spent://g' -e 's/^\([^:]*\):*.*$/\1/g')
+      PARAM_2=$(echo "$1" | sed -e 's/^spent://g' -e 's/^[^:]*:*\([^:]*\).*$/\1/g')
+      PARAM_3=$(echo "$1" | sed -e 's/^spent://g' -e 's/^[^:]*:*[^:]*:*\([^:]*\).*$/\1/g')
+      #echo "PARAM_1:>$PARAM_1<"
+      #echo "PARAM_2:>$PARAM_2<"
+      #echo "PARAM_3:>$PARAM_3<"
+
+      if [[ "$PARAM_1" =~ ^[0-9]*\.?[0-9]+$ ]];then
+        #echo "PARAM_1 one is spent time"
+        SPENT_HOURS="$PARAM_1"
+      elif [[ "$PARAM_1" =~ ^[0-9]{2}-[0-9]{2}$ ]];then
+        #echo "PARAM_1 one is date without year"
+        SPENT_ON="$(date +%Y)-$PARAM_1"
+      elif [[ "$PARAM_1" =~ ^([0-9]{2}|[0-9]{4})-[0-9]{2}-[0-9]{2}$ ]];then
+        #echo "PARAM_1 one is date"
+        SPENT_ON="$PARAM_1"
+      elif [ -n "$PARAM_1" ];then 
+        #echo "PARAM_1 is unknown format"
+        COMMENTS="$PARAM_1"
+      fi
+
+      if [[ "$PARAM_2" =~ ^[0-9]*\.?[0-9]+$ ]];then
+        SPENT_HOURS="$PARAM_2"
+      elif [[ "$PARAM_2" =~ ^[0-9]{2}-[0-9]{2}$ ]];then
+        SPENT_ON="$(date +%Y)-$PARAM_2"
+      elif [[ "$PARAM_2" =~ ^([0-9]{2}|[0-9]{4})-[0-9]{2}-[0-9]{2}$ ]];then
+        SPENT_ON="$PARAM_2"
+      elif [ -n "$PARAM_2" ];then 
+        COMMENTS="$PARAM_2"
+      fi
+
+      if [[ "$PARAM_3" =~ ^[0-9]*\.?[0-9]+$ ]];then
+        SPENT_HOURS="$PARAM_3"
+      elif [[ "$PARAM_3" =~ ^[0-9]{2}-[0-9]{2}$ ]];then
+        SPENT_ON="$(date +%Y)-$PARAM_3"
+      elif [[ "$PARAM_3" =~ ^([0-9]{2}|[0-9]{4})-[0-9]{2}-[0-9]{2}$ ]];then
+        SPENT_ON="$PARAM_3"
+      elif [ -n "$PARAM_3" ];then 
+        COMMENTS="$PARAM_3"
+      fi
+
       shift
+
+      #echo "SPENT_HOURS:>$SPENT_HOURS<"
+      #echo "SPENT_ON:>$SPENT_ON<"
+      #echo "COMMENTS:>$COMMENTS<"
+
+      if [ -z "$SPENT_HOURS" ];then
+        echo "missing information about spent time"
+        exit 1
+      fi
+      TIME_ENTRY="'hours':'$SPENT_HOURS'"
+      [ -n "$COMMENTS" ] && TIME_ENTRY+=",'comments':'$COMMENTS'"
+      [ -n "$SPENT_ON" ] && TIME_ENTRY+=",'spent_on':'$SPENT_ON'"
+      TIME_ENTRY+=",'activity_id':9"
+
+      #echo "$TIME_ENTRY"
+
       for ID in $IDS; do
-        echo "'hours':'$SPENT_HOURS'" |\
-        sed -e "s/$/,'spent_on':'$SPENT_ON'/g" |\
-        sed -e "s/$/,'comments':'$COMMENTS'/g" |\
-        sed -e "s/$/,'activity_id':9/g" |\
-        sed -e "s/$/,'issue_id':$ID/g" |\
+        echo "$TIME_ENTRY,'issue_id':$ID" |\
         sed -e "s/^/{'time_entry':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
         curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/time_entries.json?key=$KEY" 
         echo
