@@ -3,47 +3,9 @@
 while true; do
   if [ "$#" -ge 1 ]; then
 
-    if [ $(echo "$1" | grep "^spent_time:[a-zA-Z0-9_-]*") ]; then
-      USER_STRING=$(echo "$1" | sed 's/^spent_time://g')
-      shift
-      if [ -z "$USER_STRING" ];then
-          DAYS_TO_SHOW=".[-4:]"
-          #if [ -n "${TIME_TO_SHOW}" ]; then
-          #  DAYS_TO_SHOW=".[-${TIME_TO_SHOW}:]"
-          #fi
-          curl -s -3 "https://$SERVER/projects/$PROJECT_ID/time_entries.json?limit=${ISSUE_LIMIT}&key=$KEY" |\
-          jq '.time_entries' |\
-          jq '. | sort_by(.spent_on)' |\
-          jq '. | group_by(.spent_on)' |\
-          jq "$DAYS_TO_SHOW" |\
-          jq -r -c '.[] | "\(.[0].spent_on)", (.[] | "    \(.issue.id): \(.hours): \"\(.comments//"")\""), "          \([.[] | .hours] | add)"' 
-
-          #jq -r -c '.[] | "\(.[0].spent_on)", (.[] | "    \(.issue.id) : \(.hours)    \(.comments//"")"), "    -----------\n           \([.[] | .hours] | add)"' 
-
-          echo "$( date +%F) : today"
-      else
-        MATCHING_USER_ID="$(project_member_by_name $USER_STRING)"
-        if [ -n "$MATCHING_USER_ID" ];then
-
-          DAYS_TO_SHOW=".[-4:]"
-          #if [ -n "${TIME_TO_SHOW}" ]; then
-          #  DAYS_TO_SHOW=".[-${TIME_TO_SHOW}:]"
-          #fi
-          curl -s -3 "https://$SERVER/projects/$PROJECT_ID/time_entries.json?limit=${ISSUE_LIMIT}&key=$KEY&user_id=$MATCHING_USER_ID" |\
-          jq '.time_entries' |\
-          jq '. | sort_by(.spent_on)' |\
-          jq '. | group_by(.spent_on)' |\
-          jq "$DAYS_TO_SHOW" |\
-          jq -r -c '.[] | "\(.[0].spent_on)", (.[] | "    \(.issue.id): \(.hours): \"\(.comments//"")\""), "          \([.[] | .hours] | add)"' 
-
-          #jq -r -c '.[] | "\(.[0].spent_on)", (.[] | "    \(.issue.id) : \(.hours)    \(.comments//"")"), "    -----------\n           \([.[] | .hours] | add)"' 
-
-          echo "$( date +%F) : today"
-        fi
-      fi
-    elif [ $(echo "$1" | grep "^spent_time_details") ]; then
-      PARAM_1=$(echo "$1" | sed -e 's/^spent_time_details//g' -e 's/^\(:[^:]*\):*.*$/\1/g' -e 's/^://g')
-      PARAM_2=$(echo "$1" | sed -e 's/^spent_time_details//g' -e 's/^:[^:]*\(:*.*\)$/\1/g' -e 's/^://g')
+    if [ $(echo "$1" | grep "^spent_time") ]; then
+      PARAM_1=$(echo "$1" | sed -e 's/^spent_time//g' -e 's/^\(:[^:]*\):*.*$/\1/g' -e 's/^://g')
+      PARAM_2=$(echo "$1" | sed -e 's/^spent_time//g' -e 's/^:[^:]*\(:*.*\)$/\1/g' -e 's/^://g')
       shift
       DAYS_TO_SHOW="3"
       COMMENT_FILTER=""
