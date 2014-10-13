@@ -110,7 +110,7 @@ while true;do
       done
       IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
 
-    elif [ "$1" = "load_children" ]; then
+    elif [ "$1" = "children" ]; then
       shift
       ALL_TASKS_JSON="$(load_json_of_ids "$IDS" 1)"
       ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
