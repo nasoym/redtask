@@ -109,13 +109,17 @@ function print_default() {
     jq -r \
 "\"$LEADING_SPACES\
 \(.id)\
- [\(.estimated_hours//\"-\")]\
+ [\
+\(.estimated_hours//\"-\")\
+\(if (.cjson.complexity!= null) then \" x\(.cjson.complexity)\" else \"\" end)\
+\(if (.cjson.innovation!= null) then \" i\(.cjson.innovation)\" else \"\" end)\
+\(if (.cjson.pairing!= null) then \" p\(.cjson.pairing)\" else \"\" end)\
+]\
 \(if ( (.cjson.tags != null) and ((.cjson.tags|length) > 0) ) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
 \(if (.assigned_to.name!=null) then \" \(.assigned_to.name)\" else \"\" end):\
  \\\"\(.subject)\\\"\
 \"" |\
     sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
-#clx:\(.cjson.complexity//\"-\") inv:\(.cjson.innovation//\"-\") 
 
     #local STATUS_IN_WORK=$(echo "$JSON" | jq -r 'if .status.id == 2 then 1 else 0 end')
     #if [ "$STATUS_IN_WORK" -eq 1 ]; then
