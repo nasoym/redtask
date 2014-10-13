@@ -149,8 +149,8 @@ if [ "$#" -ge 1 ]; then
           shift
           MODIFICATION_VALUES+=("'story_points':$STORY_POINTS")
 
-        elif [ $(echo "$1" | grep "^estimate:[0-9]\+$") ]; then
-          ESTIMATED_HOURS=$(echo "$1" | sed 's/^estimate://g')
+        elif [ $(echo "$1" | grep "^\(estimate\|est\):[0-9]\+$") ]; then
+          ESTIMATED_HOURS=$(echo "$1" | sed -E -e 's/^(estimate|est)://g')
           shift
           MODIFICATION_VALUES+=("'estimated_hours':$ESTIMATED_HOURS")
 
@@ -227,7 +227,7 @@ if [ "$#" -ge 1 ]; then
           fi
           CUSTOM_JSON_MODIFIER+=".pairing=$VALUE"
 
-        elif [ $(echo "$1" | grep "\<clx:[0-9]*\>") ]; then
+        elif [ $(echo "$1" | grep "^clx:[0-9]*$") ]; then
           VALUE="$(echo "$1" | sed 's/^clx://g')"
           shift
           if [ -n "$CUSTOM_JSON_MODIFIER" ];then
@@ -235,7 +235,7 @@ if [ "$#" -ge 1 ]; then
           fi
           CUSTOM_JSON_MODIFIER+=".complexity=$VALUE"
 
-        elif [ $(echo "$1" | grep "\<ino:[0-9]*\>") ]; then
+        elif [ $(echo "$1" | grep "^ino:[0-9]*$") ]; then
           VALUE="$(echo "$1" | sed 's/^ino://g')"
           shift
           if [ -n "$CUSTOM_JSON_MODIFIER" ];then
