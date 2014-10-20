@@ -13,25 +13,25 @@ function filter_01() {
 }
 
 function current_sprint_id() {
-  curl -s -3 "https://$SERVER/projects/$PROJECT_ID/versions.json?key=$KEY" |\
+  curl -s  "https://$SERVER/projects/$PROJECT_ID/versions.json?key=$KEY" |\
   jq '(.versions[] | select( .status == "open") | .id)'
 }
 
 function current_user_id() {
-  curl -s -3 "https://$SERVER/users/current.json?key=$KEY" |\
+  curl -s  "https://$SERVER/users/current.json?key=$KEY" |\
   jq '.user.id'
 }
 
 function versions() {
-  curl -s -3 "https://$SERVER/projects/$PROJECT_ID/versions.json?key=$KEY" |\
+  curl -s  "https://$SERVER/projects/$PROJECT_ID/versions.json?key=$KEY" |\
   jq -c '.versions[]'
   #jq -c '.versions[] | {id: .id, name: .name, status: .status, due_date: .due_date}'
 }
 
 function current_ids() {
   local SPRINT_ID=$(current_sprint_id)
-  #curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&tracker_id=2&status_id=open&fixed_version_id=$SPRINT_ID" |\
-  curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=$SPRINT_ID&tracker_id=2" |\
+  #curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&tracker_id=2&status_id=open&fixed_version_id=$SPRINT_ID" |\
+  curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=$SPRINT_ID&tracker_id=2" |\
   jq '.issues[] | .id'
 }
 
@@ -46,21 +46,21 @@ function fixture_02() {
 function current_stories() {
   local SPRINT_ID=$(current_sprint_id)
   json_lines_to_json_array \
-  "$(curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=$SPRINT_ID&tracker_id=2" |\
+  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=$SPRINT_ID&tracker_id=2" |\
   jq -c '.issues[]')"
 }
 
 function current() {
   local SPRINT_ID=$(current_sprint_id)
   json_lines_to_json_array \
-  "$(curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=$SPRINT_ID&sort=status:desc" |\
+  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=$SPRINT_ID&sort=status:desc" |\
   jq -c '.issues[]')"
 }
 
 function current_done() {
   local SPRINT_ID=$(current_sprint_id)
   json_lines_to_json_array \
-  "$(curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&fixed_version_id=$SPRINT_ID&sort=status:desc&tracker_id=4" |\
+  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&fixed_version_id=$SPRINT_ID&sort=status:desc&tracker_id=4" |\
   jq -c '.issues[]')"
 }
 
@@ -68,7 +68,7 @@ function done_today() {
   local SPRINT_ID=$(current_sprint_id)
   local DATE_FILTER=$(date +%F)
   json_lines_to_json_array \
-  "$(curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&sort=status:desc&closed_on=$DATE_FILTER" |\
+  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&sort=status:desc&closed_on=$DATE_FILTER" |\
   jq -c '.issues[]')"
 }
 function done_yesterday() {
@@ -79,14 +79,14 @@ function done_yesterday() {
     local DATE_FILTER=$(date +%F)
   fi
   json_lines_to_json_array \
-  "$(curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&sort=status:desc&closed_on=$DATE_FILTER" |\
+  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&sort=status:desc&closed_on=$DATE_FILTER" |\
   jq -c '.issues[]')"
 }
 
 function backlog() {
   local SPRINT_ID=$(current_sprint_id)
   json_lines_to_json_array \
-  "$(curl -s -3 "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=!$SPRINT_ID&sort=status:desc" |\
+  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=!$SPRINT_ID&sort=status:desc" |\
   jq -c '.issues[]')"
 }
 

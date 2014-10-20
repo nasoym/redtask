@@ -2,7 +2,7 @@
 
 function issue() {
   local ISSUE_ID=$1
-  local REDMINE_ISSUE=$(curl -s -3 "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}&include=journals,children")
+  local REDMINE_ISSUE=$(curl -s "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}&include=journals,children")
   local REDMINE_SINGLE_ISSUE=$(echo $REDMINE_ISSUE | jq -c '.issue')
   echo "$REDMINE_SINGLE_ISSUE"
 }
@@ -56,7 +56,7 @@ function write_issue() {
   local VALUES=$2
   local CURL_STRING=$(echo "$VALUES" | sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g")
   echo "$CURL_STRING" |\
-  curl -X PUT -H "Content-type:application/json" -s -3 -d @- "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}"
+  curl -X PUT -H "Content-type:application/json" -s -d @- "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}"
 }
 
 function modifier_string_for_custom_json() {
@@ -76,7 +76,7 @@ function modifier_string_for_custom_json() {
 }
 
 function project_members() {
-  curl -s -3 "https://$SERVER/projects/$PROJECT_ID/memberships.json?key=$KEY" |\
+  curl -s "https://$SERVER/projects/$PROJECT_ID/memberships.json?key=$KEY" |\
   jq -c '.memberships'
   #jq -r '(.memberships[] | .user | "\(.name) : \(.id)")'
 }

@@ -28,7 +28,7 @@ while true; do
       #echo "DAYS_TO_SHOW:>$DAYS_TO_SHOW<"
       #echo "COMMENT_FILTER:>$COMMENT_FILTER<"
       #exit 0
-      TIME_ENTRIES=$(curl -s -3 "https://$SERVER/projects/$PROJECT_ID/time_entries.json?limit=${ISSUE_LIMIT}&key=$KEY" |\
+      TIME_ENTRIES=$(curl -s "https://$SERVER/projects/$PROJECT_ID/time_entries.json?limit=${ISSUE_LIMIT}&key=$KEY" |\
       jq '.time_entries' |\
       jq '. | sort_by(.spent_on)')
 
@@ -160,7 +160,7 @@ while true; do
       for ID in $IDS; do
         echo "$TIME_ENTRY,'issue_id':$ID" |\
         sed -e "s/^/{'time_entry':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
-        curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/time_entries.json?key=$KEY" 
+        curl -X POST -H "Content-type:application/json" -s -d @- "https://$SERVER/time_entries.json?key=$KEY" 
         echo
       done
 

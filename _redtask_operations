@@ -61,7 +61,7 @@ if [ "$#" -ge 1 ]; then
       read -p "   [y|n]" -n 1 -r CONFIRM
       echo
       if [[ "$CONFIRM" =~ ^(y|Y)$ ]]; then
-        curl -X DELETE -s -3 "https://$SERVER/issues/$ID.json?key=$KEY"
+        curl -X DELETE -s "https://$SERVER/issues/$ID.json?key=$KEY"
       fi
     done
 
@@ -358,7 +358,7 @@ if [ "$#" -ge 1 ]; then
         fi
         echo "$LOCAL_FINAL_MODIFICATION_STRING" |\
         sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
-        curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/issues.json?key=$KEY" |\
+        curl -X POST -H "Content-type:application/json" -s -d @- "https://$SERVER/issues.json?key=$KEY" |\
         jq '.issue.id'
         ;;
     esac
