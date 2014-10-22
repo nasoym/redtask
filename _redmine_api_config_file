@@ -56,11 +56,16 @@ if [ -f $SCRIPT_PATH/.redmine ]; then
   source $SCRIPT_PATH/.redmine
 fi
 
-if [ -f .redmine ]; then
-  assert_permissions .redmine
-  #assert_statements .redmine
-  source .redmine
-fi
+PARENT_FOLDER=$(pwd)
+until [ "$PARENT_FOLDER" == "/" ]; do
+  FILE="$PARENT_FOLDER/.redmine"
+  if [ -f $FILE ]; then
+    assert_permissions $FILE
+    #assert_statements .redmine
+    source $FILE
+  fi
+  PARENT_FOLDER=$(dirname $PARENT_FOLDER)
+done
 
 if [ -n "$CONFIG_FILE" ]; then
   assert_permissions $CONFIG_FILE
