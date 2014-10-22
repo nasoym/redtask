@@ -18,8 +18,8 @@ source $SCRIPT_PATH/_redtask_options
 IFS=$'\n'
 IFS=${IFS:0:1}
 
-if [ -z "$SERVER" ] || [ -z "$PROJECT_ID" ] || [ -z "$KEY" ]; then
-  echo "SERVER,PROJECT_ID or KEY variable are not defined." >&2
+if [ -z "$SERVER" ] || [ -z "$KEY" ]; then
+  echo "SERVER or KEY variable are not defined." >&2
   echo "  These variables should either be defined as environments variables," >&2
   echo "  or in a .redmine file in the current directory or the users home directory." >&2
   exit 1
