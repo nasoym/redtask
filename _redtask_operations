@@ -24,7 +24,7 @@ if [ "$#" -ge 1 ]; then
   elif [ "$1" = "done" ]; then
     shift
     for ID in $IDS; do
-      write_issue $ID "'status_id':'5'"
+      write_issue $ID "'status_id':'$STATUS_DONE'"
     done
 
   elif [ "$1" = "reject" ]; then
@@ -42,13 +42,13 @@ if [ "$#" -ge 1 ]; then
   elif [ "$1" = "new" ]; then
     shift
     for ID in $IDS; do
-      write_issue $ID "'status_id':'1'"
+      write_issue $ID "'status_id':'$STATUS_NEW'"
     done
 
   elif [ "$1" = "doing" ]; then
     shift
     for ID in $IDS; do
-      write_issue $ID "'status_id':'2'"
+      write_issue $ID "'status_id':'$STATUS_DOING'"
     done
 
   elif [ "$1" = "delete" ]; then
