@@ -75,6 +75,10 @@ function modifier_string_for_custom_json() {
   echo "'$CUSTOM_JSON_KEY':'$NEW_VALUE'"
 }
 
+function issue_statuses() {
+  curl -s "https://$SERVER/issue_statuses.json?key=$KEY"
+}
+
 function project_members() {
   curl -s "https://$SERVER/projects/$PROJECT_ID/memberships.json?key=$KEY" |\
   jq -c '.memberships'
