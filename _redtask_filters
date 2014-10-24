@@ -116,6 +116,7 @@ while true;do
       ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
 
     elif [ "$1" = "load_details" ]; then
+      #TODO: do not reload children if they are already loaded
       shift
       if [ -z "$ALL_TASKS_JSON" ] && [ -n "$IDS" ];then
         #echo "ids are provided but no content was loaded so far"
