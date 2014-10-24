@@ -139,6 +139,11 @@ if [ "$#" -ge 1 ]; then
           MODIFICATION_VALUES+=("'remaining_hours':$TOTAL_TIME")
           MODIFICATION_VALUES+=("'estimated_hours':$TOTAL_TIME")
 
+        elif [ "$(echo "$1" | grep "\<note:.*")" ]; then
+          NOTE_STRING="$(echo "$1" | sed -e 's/^note://g')"
+          shift
+          MODIFICATION_VALUES+=("'notes':'$NOTE_STRING'")
+
         elif [ $(echo "$1" | grep "\<remaining:[0-9]*\>") ]; then
           REMAINING_HOURS=$(echo "$1" | sed 's/^remaining://g')
           shift
