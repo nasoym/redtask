@@ -1,84 +1,46 @@
 #!/bin/bash
 
 function print_details() {
-# #\(.fixed_version.name)\
-# #parent:\(.parent.id)\
-# #assign:\(.assigned_to.name)\
-# #\\\"\(.subject)\\\"\
   local JSON="$1"
   local LEADING_SPACES="$2"
-  #local FEATURE=$(echo "$JSON" | jq -r 'if .tracker_name == "Feature" then 1 else 0 end')
-  local FEATURE=$(echo "$JSON" | jq -r 'if .tracker.id == 2 then 1 else 0 end')
-  if [ "$FEATURE" -eq 1 ]; then
-    LINE="$(echo "$JSON" |\
-    jq -r \
-"\"$LEADING_SPACES\
-\(.id)\
- [\(.estimated_hours//\"-\")]\
- [\(.done_ratio//\"-\")%:\(.story_points//\"-\")p]\
-\(if (.release.release.name!=null) then \" (\(.release.release.id))\" else \"\" end)\
-\(if ( (.cjson.tags != null) and ((.cjson.tags|length) > 0) ) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
-\(if (.assigned_to.name!=null) then \" \(.assigned_to.name)\" else \"\" end):\
- \\\"\(.subject)\\\"\
-\"" |\
-    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
-#\(if (.release.release.name!=null) then \" \(.release.release.name)(\(.release.release.id))\" else \"\" end)\
+  print_default "$JSON" "$LEADING_SPACES" | tr -d '\n'
 
-    tput setaf 5
-    echo -n "$LINE"
-    tput sgr0
-  else
-    LINE="$(echo "$JSON" |\
-    jq -r \
-"\"$LEADING_SPACES\
-\(.id)\
- [\(.estimated_hours//\"-\")]\
-\(if ( (.cjson.tags != null) and ((.cjson.tags|length) > 0) ) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
-\(if (.assigned_to.name!=null) then \" \(.assigned_to.name)\" else \"\" end):\
- \\\"\(.subject)\\\"\
-\"" |\
-    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
-
-    #local STATUS_IN_WORK=$(echo "$JSON" | jq -r 'if .status.id == 2 then 1 else 0 end')
-    #if [ "$STATUS_IN_WORK" -eq 1 ]; then
-    if [ "$(echo "$JSON" | jq -r 'if .status.id == 2 then 1 else 0 end')" -eq 1 ];then
-      tput setaf 2
-      echo -n "$LINE"
-      tput sgr0
-    else
-      tput bold
-      tput setaf 6
-      echo -n "$LINE"
-      tput sgr0
-    fi
-  fi
-  echo -n "$(echo "$JSON" |\
-    jq -r "\
+  echo -n "$(echo "$JSON" | jq -r "\
 if (.cjson.deliverable != null) then \"\n${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}deliverable:\
 '\(.cjson.deliverable)'\" else \"\" end" |\
     sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
-  echo -n "$(echo "$JSON" |\
-    jq -r "\
+
+  echo -n "$(echo "$JSON" | jq -r "\
 if (.cjson.requirements != null) then \"\n${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}requirements:\
 '\(.cjson.requirements)'\" else \"\" end" |\
     sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
-  echo -n "$(echo "$JSON" |\
-    jq -r "\
+
+  echo -n "$(echo "$JSON" | jq -r "\
 if ((.cjson.complexity!= null)or(.cjson.innovation!=null)or(.cjson.pairing!=null)) then \"\n${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}\
 clx:\(.cjson.complexity//\"-\") inv:\(.cjson.innovation//\"-\") pair:\(.cjson.pairing//\"-\")\" else \"\" end" |\
     sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
 
-#clx:\(.cjson.complexity//\"-\") inv:\(.cjson.innovation//\"-\") 
+  NOTES="$(echo "$JSON" | jq -c "\
+if (.journals != null) then \
+[.journals[] | select(.notes != \"\") | { a: .user.name, b: .notes } ] \
+else [] end \
+")"
+  if [ "$NOTES" != "[]" ];then
+    echo
+    echo -n "$( echo "$NOTES" |\
+    jq ".[] | \"${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}\
+note: \(.a): \(.b)\" "\
+    |sed -e 's/^"//g' -e 's/"$//g'\
+    |sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"\
+    )"
+  fi
 
+  echo -n "$(echo "$JSON" | jq -r "\
+if (.release.release.name != null) then \"\n${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}\
+release: \(.release.release.name) (\(.release.release.id))\" else \"\" end" |\
+    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
 
   echo
-#  echo "$(echo "$JSON" |\
-#    jq -r "\
-#if (.release.release.name != null) then \"\n${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}release:\
-#\(.release.release.name) (\(.release.release.id))\" else \"\" end" |\
-#    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
-
-
 }
 
 function print_default() {
