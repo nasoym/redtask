@@ -164,6 +164,7 @@ while true; do
         echo
       done
 
+
 #    elif [ $(echo "$1" | grep "^spent:[0-9]*:[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}$") ]; then
 #      SPENT_HOURS=$(echo "$1" | sed 's/^spent:\(.*\):.*$/\1/g')
 #      SPENT_ON=$(echo "$1" | sed 's/^spent:.*:\(.*\)$/\1/g')
@@ -177,6 +178,10 @@ while true; do
 #        curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/time_entries.json?key=$KEY" 
 #        echo
 #      done
+    elif [ $(echo "$1" | grep "^del_time:[0-9]*$") ]; then
+      TIME_ID=$(echo "$1" | sed 's/^del_time://g')
+      shift
+      curl -X DELETE -s "https://$SERVER/time_entries/$TIME_ID.json?key=$KEY"
 
     else
       break
