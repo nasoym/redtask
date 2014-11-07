@@ -1,5 +1,18 @@
 #!/bin/bash
 
+function print_desc() {
+  local JSON="$1"
+  local LEADING_SPACES="$2"
+  print_default "$JSON" "$LEADING_SPACES" | tr -d '\n'
+
+  echo -n "$(echo "$JSON" | jq -r "\
+\"\n${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}\
+\(.description)\
+\"" \
+  )"
+  echo
+}
+
 function print_details() {
   local JSON="$1"
   local LEADING_SPACES="$2"
