@@ -179,6 +179,14 @@ if [ "$#" -ge 1 ]; then
           shift
           MODIFICATION_VALUES+=("'assigned_to_id':$OWNER")
 
+        elif [ $(echo "$1" | grep "^category:[0-9]*$") ]; then
+          CATEGORY_ID=$(echo "$1" | sed 's/^category://g')
+          if [ -z "$CATEGORY_ID" ];then
+            CATEGORY_ID="null"
+          fi
+          shift
+          MODIFICATION_VALUES+=("'category_id':$CATEGORY_ID")
+
         elif [ $(echo "$1" | grep "\<assign:[a-zA-Z0-9_-]*\>") ]; then
           USER_STRING="$(echo "$1" | sed 's/^assign://g')"
           shift
