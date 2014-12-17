@@ -26,6 +26,10 @@ function projects() {
   curl -s  "https://$SERVER/projects.json?key=$KEY"
 }
 
+function project_details() {
+  curl -s  "https://$SERVER/projects/$PROJECT_ID.json?key=$KEY"
+}
+
 function versions() {
   curl -s  "https://$SERVER/projects/$PROJECT_ID/versions.json?key=$KEY" |\
   jq -c '.versions[]'
