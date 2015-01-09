@@ -85,6 +85,16 @@ if [ "$#" -ge 1 ]; then
       write_issue $ID "'subject':'$NEW_SUBJECT'"
     done
 
+  elif [ "$1" = "edit:description" ]; then
+    shift
+    load_json_content_of_ids
+    for ID in $IDS; do
+      JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
+      OLD_DESCRIPTION="$(echo "$JSON" | jq -r '.description//""')"
+      NEW_DESCRIPTION="$(echo "$OLD_DESCRIPTION" | perl -p -e 's/\r//g'| EDITOR="vim -u NONE" vipe)"
+      write_issue $ID "'description':'$NEW_DESCRIPTION'"
+    done
+
   elif [ "$1" = "deliver_edit" ]; then
     shift
     load_json_content_of_ids
