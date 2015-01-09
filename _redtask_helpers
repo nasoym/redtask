@@ -83,13 +83,15 @@ function versions() {
 }
 
 function issue_statuses() {
-  curl -s "https://$SERVER/issue_statuses.json?key=$KEY"
+  curl -s "https://$SERVER/issue_statuses.json?key=$KEY" \
+  | jq -c '.issue_statuses' \
+  | jq -c '[.[] | {id: .id, name: .name}]'
 }
 
 function project_members() {
-  curl -s "https://$SERVER/projects/$PROJECT_ID/memberships.json?key=$KEY" |\
-  jq -c '.memberships'
-  #jq -r '(.memberships[] | .user | "\(.name) : \(.id)")'
+  curl -s "https://$SERVER/projects/$PROJECT_ID/memberships.json?key=$KEY" \
+  | jq -c '.memberships' \
+  | jq -r -c '[.[] | {id: .id, user: .user}]'
 }
 
 function project_member_by_name() {
