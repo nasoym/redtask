@@ -81,7 +81,7 @@ if [ "$#" -ge 1 ]; then
     for ID in $IDS; do
       JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
       OLD_SUBJECT="$(echo "$JSON" | jq -r '.subject')"
-      NEW_SUBJECT="$(echo "$OLD_SUBJECT" | vipe)"
+      NEW_SUBJECT="$(echo "$OLD_SUBJECT" | EDITOR="vim -u NONE" vipe)"
       write_issue $ID "'subject':'$NEW_SUBJECT'"
     done
 
@@ -91,7 +91,7 @@ if [ "$#" -ge 1 ]; then
     for ID in $IDS; do
       JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
       OLD_DELIVERABLE="$(echo "$JSON" | jq -r '.cjson.deliverable//""')"
-      NEW_DELIVERABLE="$(echo "$OLD_DELIVERABLE" | vipe)"
+      NEW_DELIVERABLE="$(echo "$OLD_DELIVERABLE" | EDITOR="vim -u NONE" vipe)"
       LOCAL_CUSTOM_JSON_MODIFIER=".deliverable=\"$NEW_DELIVERABLE\""
       LOCAL_FINAL_MODIFICATION_STRING="$(modifier_string_for_custom_json "$JSON" "$LOCAL_CUSTOM_JSON_MODIFIER")"
       write_issue $ID "$LOCAL_FINAL_MODIFICATION_STRING"
@@ -103,7 +103,7 @@ if [ "$#" -ge 1 ]; then
     for ID in $IDS; do
       JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
       OLD_DELIVERABLE="$(echo "$JSON" | jq -r '.cjson.requirements//""')"
-      NEW_DELIVERABLE="$(echo "$OLD_DELIVERABLE" | vipe)"
+      NEW_DELIVERABLE="$(echo "$OLD_DELIVERABLE" | EDITOR="vim -u NONE" vipe)"
       LOCAL_CUSTOM_JSON_MODIFIER=".requirements=\"$NEW_DELIVERABLE\""
       LOCAL_FINAL_MODIFICATION_STRING="$(modifier_string_for_custom_json "$JSON" "$LOCAL_CUSTOM_JSON_MODIFIER")"
       write_issue $ID "$LOCAL_FINAL_MODIFICATION_STRING"
