@@ -69,6 +69,7 @@ function print_default() {
 \(.id)\
  [\(.estimated_hours//\"-\"):\(.done_ratio//\"-\")%]\
 \(if ( (.cjson.tags != null) and ((.cjson.tags|length) > 0) ) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
+\(if (.category.name!=null) then \" \(.category.name)\" else \"\" end) \
 \(if (.assigned_to.name!=null) then \" \(.assigned_to.name)\" else \"\" end):\
  \\\"\(.subject)\\\"\
 \"" |\
@@ -91,6 +92,7 @@ function print_default() {
 \(if (.cjson.pairing!= null) then \" p\(.cjson.pairing)\" else \"\" end)\
 ]\
 \(if ( (.cjson.tags != null) and ((.cjson.tags|length) > 0) ) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
+\(if (.category.name!=null) then \" (\(.category.name))\" else \"\" end)\
 \(if (.assigned_to.name!=null) then \" \(.assigned_to.name)\" else \"\" end):\
  \\\"\(.subject)\\\"\
 \"" |\
