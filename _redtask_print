@@ -67,14 +67,13 @@ function print_default() {
     jq -r \
 "\"$LEADING_SPACES\
 \(.id)\
- [\(.estimated_hours//\"-\")]\
- [\(.done_ratio//\"-\")%:\(.story_points//\"-\")p]\
-\(if (.release.release.name!=null) then \" (\(.release.release.id))\" else \"\" end)\
+ [\(.estimated_hours//\"-\"):\(.done_ratio//\"-\")%]\
 \(if ( (.cjson.tags != null) and ((.cjson.tags|length) > 0) ) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
 \(if (.assigned_to.name!=null) then \" \(.assigned_to.name)\" else \"\" end):\
  \\\"\(.subject)\\\"\
 \"" |\
     sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
+#\(if (.release.release.name!=null) then \" (\(.release.release.id))\" else \"\" end)\
 #\(if (.release.release.name!=null) then \" \(.release.release.name)(\(.release.release.id))\" else \"\" end)\
 
     tput setaf 5
