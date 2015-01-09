@@ -75,7 +75,7 @@ if [ "$#" -ge 1 ]; then
       write_issue $ID "'remaining_hours':$ESTIMATED_HOURS"
     done
 
-  elif [ "$1" = "subject_edit" ]; then
+  elif [ "$1" = "edit:subject" ]; then
     shift
     load_json_content_of_ids
     for ID in $IDS; do
