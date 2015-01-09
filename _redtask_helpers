@@ -53,8 +53,8 @@ function load_json_content_of_ids() {
 
 function write_issue() {
   local ISSUE_ID=$1
-  local VALUES=$2
-  local CURL_STRING=$(echo "$VALUES" | sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g")
+  local VALUES="$(echo "$2" | perl -p -e 's/\n/\\n/g' | sed -e 's/\\n$//g')"
+  local CURL_STRING="$(echo "$VALUES" | sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g")"
   echo "$CURL_STRING" |\
   curl -X PUT -H "Content-type:application/json" -s -d @- "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}"
 }
