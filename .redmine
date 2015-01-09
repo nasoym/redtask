@@ -70,6 +70,13 @@ function current_done() {
   jq -c '.issues[]')"
 }
 
+function current_all() {
+  local SPRINT_ID=$(current_sprint_id)
+  json_lines_to_json_array \
+  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=*&fixed_version_id=$SPRINT_ID&sort=status:desc" |\
+  jq -c '.issues[]')"
+}
+
 function done_today() {
   local SPRINT_ID=$(current_sprint_id)
   local DATE_FILTER=$(date +%F)
