@@ -5,12 +5,13 @@ function print_desc() {
   local LEADING_SPACES="$2"
   print_default "$JSON" "$LEADING_SPACES" | tr -d '\n'
 
-  echo -n "$(echo "$JSON" | jq -r "\
-\"\n${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}\
-\(.description)\
-\"" \
-  )"
-  echo
+  DESCRIPTION="$(echo "$JSON" | jq -r '.description//""')"
+  if [ -n "$DESCRIPTION" ];then
+    echo
+    echo "$DESCRIPTION" | sed -e "s/^/${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}/g"
+  else
+    echo
+  fi
 }
 
 function print_details() {
