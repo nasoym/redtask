@@ -135,7 +135,7 @@ while true;do
       shift
       load_json_content_of_ids
       for TASK_JSON in $( echo "$ALL_TASKS_JSON" | jq -c '.[]' ); do
-        json_line_print "$TASK_JSON" print_default
+        json_line_print "$TASK_JSON" print_desc
       done
 
     elif [ $(echo "$1" | grep "lines:[a-zA-Z0-9_-]*") ]; then
