@@ -13,8 +13,12 @@ function filter_01() {
 }
 
 function current_sprint_id() {
-  curl -s  "https://$SERVER/projects/$PROJECT_ID/versions.json?key=$KEY" |\
-  jq '(.versions[] | select( .status == "open") | .id)' | tail -n 1
+  if [ -z "$CURRENT_VERSION" ];then
+    curl -s  "https://$SERVER/projects/$PROJECT_ID/versions.json?key=$KEY" |\
+    jq '(.versions[] | select( .status == "open") | .id)' | tail -n 1
+  else
+    echo "$CURRENT_VERSION"
+  fi
 }
 
 function current_user_id() {
