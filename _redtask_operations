@@ -27,6 +27,12 @@ if [ "$#" -ge 1 ]; then
       write_issue $ID "'status_id':'$STATUS_DONE'"
     done
 
+  elif [ "$1" = "resolved" ]; then
+    shift
+    for ID in $IDS; do
+      write_issue $ID "'status_id':'$STATUS_RESOLVED'"
+    done
+
   elif [ "$1" = "reject" ]; then
     shift
     for ID in $IDS; do
