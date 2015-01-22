@@ -65,6 +65,16 @@ while true;do
       ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.category.id==$CATEGORY_ID)]" )
       IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
 
+    elif [ $(echo "$1" | grep "\<category:[a-zA-Z0-9_-]*\>") ]; then
+      CATEGORY_STRING=$(echo "$1" | sed 's/^category://g')
+      shift
+      load_json_content_of_ids
+      MATCHING_CATEGORY_ID="$(category_by_name $CATEGORY_STRING)"
+      if [ -n "$MATCHING_CATEGORY_ID" ];then
+        ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.category.id==$MATCHING_CATEGORY_ID)]" )
+      fi
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+
     elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
       USER_ID=$(echo "$1" | sed 's/^assign://g')
       shift

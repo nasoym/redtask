@@ -180,14 +180,6 @@ if [ "$#" -ge 1 ]; then
           shift
           MODIFICATION_VALUES+=("'estimated_hours':$ESTIMATED_HOURS")
 
-        elif [ $(echo "$1" | grep "^version:[0-9]*") ]; then
-          VERSION=$(echo "$1" | sed 's/^version://g')
-          if [ -z "$VERSION" ];then
-            VERSION="null"
-          fi
-          shift
-          MODIFICATION_VALUES+=("'fixed_version_id':$VERSION")
-
         elif [ "$1" = "unassign" ]; then
           shift
           MODIFICATION_VALUES+=("'assigned_to_id':null")
@@ -200,14 +192,6 @@ if [ "$#" -ge 1 ]; then
           shift
           MODIFICATION_VALUES+=("'assigned_to_id':$OWNER")
 
-        elif [ $(echo "$1" | grep "^category:[0-9]*$") ]; then
-          CATEGORY_ID=$(echo "$1" | sed 's/^category://g')
-          if [ -z "$CATEGORY_ID" ];then
-            CATEGORY_ID="null"
-          fi
-          shift
-          MODIFICATION_VALUES+=("'category_id':$CATEGORY_ID")
-
         elif [ $(echo "$1" | grep "\<assign:[a-zA-Z0-9_-]*\>") ]; then
           USER_STRING="$(echo "$1" | sed 's/^assign://g')"
           shift
@@ -217,6 +201,43 @@ if [ "$#" -ge 1 ]; then
           else
             echo "no or more than one user with:'$USER_STRING' was found." 1>&2
           fi
+
+        elif [ $(echo "$1" | grep "^category:[0-9]*$") ]; then
+          CATEGORY_ID=$(echo "$1" | sed 's/^category://g')
+          if [ -z "$CATEGORY_ID" ];then
+            CATEGORY_ID="null"
+          fi
+          shift
+          MODIFICATION_VALUES+=("'category_id':$CATEGORY_ID")
+
+        elif [ $(echo "$1" | grep "\<category:[a-zA-Z0-9_-]*\>") ]; then
+          CATEGORY_STRING="$(echo "$1" | sed 's/^category://g')"
+          shift
+          MATCHING_CATEGORY_ID="$(category_by_name $CATEGORY_STRING)"
+          if [ -n "$MATCHING_CATEGORY_ID" ];then
+            MODIFICATION_VALUES+=("'category_id':$MATCHING_CATEGORY_ID")
+          else
+            echo "no or more than one id with:'$CATEGORY_STRING' was found." 1>&2
+          fi
+
+        elif [ $(echo "$1" | grep "^version:[0-9]*$") ]; then
+          VERSION=$(echo "$1" | sed 's/^version://g')
+          if [ -z "$VERSION" ];then
+            VERSION="null"
+          fi
+          shift
+          MODIFICATION_VALUES+=("'fixed_version_id':$VERSION")
+
+        elif [ $(echo "$1" | grep "\<version:[a-zA-Z0-9_-]*\>") ]; then
+          VERSION_STRING="$(echo "$1" | sed 's/^version://g')"
+          shift
+          MATCHING_VERSION_ID="$(version_by_name $VERSION_STRING)"
+          if [ -n "$MATCHING_VERSION_ID" ];then
+            MODIFICATION_VALUES+=("'fixed_version_id':$MATCHING_VERSION_ID")
+          else
+            echo "no or more than one id with:'$VERSION_STRING' was found." 1>&2
+          fi
+
 
         elif [ $(echo "$1" | grep "\<release:[0-9]*\>") ]; then
           RELEASE_ID="$(echo "$1" | sed 's/^release://g')"

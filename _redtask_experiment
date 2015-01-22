@@ -10,6 +10,17 @@ if [ "$#" -ge 1 ]; then
     else
       echo "no or too many users found"
     fi
+
+  elif [ "$1" = "test_02" ]; then
+    #RESULT="$(category_by_name $2)"
+    RESULT="$(version_by_name $2)"
+    shift 2
+    if [ -n "$RESULT" ];then
+      echo "found id: $RESULT"
+    else
+      echo "no or too many ids found"
+    fi
+
   fi
 
 fi

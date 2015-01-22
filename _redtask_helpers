@@ -117,6 +117,34 @@ function project_member_by_name() {
   fi
 }
 
+function category_by_name() {
+  local CATEGORY_STRING="$1"
+  local ALL_CATEGORIES_JSON="$(categories | tr '[:upper:]' '[:lower:]')"
+  local MATCHING_CATEGORY_IDS="$(echo "$ALL_CATEGORIES_JSON" | jq "[.[] | select(.name | contains(\"$CATEGORY_STRING\")) | .id]")"
+  local MATCHING_CATEGORY_IDS_COUNT="$(echo "$MATCHING_CATEGORY_IDS" | jq 'length')"
+  if [ "$MATCHING_CATEGORY_IDS_COUNT" -eq 1 ];then
+    local MATCHING_CATEGORY_ID="$(echo "$MATCHING_CATEGORY_IDS" | jq '.[]')"
+    echo "$MATCHING_CATEGORY_ID"
+  else
+    #echo "category: $CATEGORY_ID had multiple matches in project categories"
+    #exit
+    echo
+  fi
+}
+
+function version_by_name() {
+  local VERSION_STRING="$1"
+  local ALL_VERSION_JSON="$(versions | tr '[:upper:]' '[:lower:]')"
+  local MATCHING_VERSION_IDS="$(echo "$ALL_VERSION_JSON" | jq "[.[] | select(.name | contains(\"$VERSION_STRING\")) | .id]")"
+  local MATCHING_VERSION_IDS_COUNT="$(echo "$MATCHING_VERSION_IDS" | jq 'length')"
+  if [ "$MATCHING_VERSION_IDS_COUNT" -eq 1 ];then
+    local MATCHING_VERSION_ID="$(echo "$MATCHING_VERSION_IDS" | jq '.[]')"
+    echo "$MATCHING_VERSION_ID"
+  else
+    echo
+  fi
+}
+
 #TODO:
 function load_json_content_for_ids() {
   :
