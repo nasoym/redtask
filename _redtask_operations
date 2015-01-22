@@ -21,10 +21,10 @@ if [ "$#" -ge 1 ]; then
       MODIFIER=""
     fi
 
-  elif [ "$1" = "done" ]; then
+  elif [ "$1" = "closed" ]; then
     shift
     for ID in $IDS; do
-      write_issue $ID "'status_id':'$STATUS_DONE'"
+      write_issue $ID "'status_id':'$STATUS_CLOSED'"
     done
 
   elif [ "$1" = "resolved" ]; then
