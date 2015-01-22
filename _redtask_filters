@@ -24,7 +24,7 @@ while true;do
     elif [ "$1" = "open" ]; then
       shift
       ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
-      jq -c "[.[]| select((.status.id != 5)and(.status.id!=6)) ]" )
+      jq -c "[.[]| select((.status.id == $STATUS_NEW)or(.status.id==$STATUS_DOING)) ]" )
       IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
 
     elif [ $(echo "$1" | grep "filter:[a-zA-Z0-9_-]\{1,\}") ]; then
