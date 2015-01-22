@@ -94,9 +94,15 @@ function done_yesterday() {
   jq -c '.issues[]')"
 }
 
+function backlog_done() {
+  json_lines_to_json_array \
+  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&fixed_version_id=!*&sort=status:desc" |\
+  jq -c '.issues[]')"
+}
+
 function backlog() {
   json_lines_to_json_array \
-  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=!$SPRINT_ID&sort=status:desc" |\
+  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=!*&sort=status:desc" |\
   jq -c '.issues[]')"
 }
 
