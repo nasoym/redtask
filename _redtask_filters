@@ -9,6 +9,12 @@ while true;do
       jq -c "[.[]| select(.tracker.id == 2) ]" )
       IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
 
+    elif [ "$1" = "bug" ]; then
+      shift
+      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+      jq -c "[.[]| select(.tracker.id == 1) ]" )
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+
     elif [ "$1" = "task" ]; then
       shift
       ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\

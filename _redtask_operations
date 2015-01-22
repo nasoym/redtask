@@ -136,6 +136,11 @@ if [ "$#" -ge 1 ]; then
           shift
           APPEND=1
 
+        elif [ "$1" = "bug" ]; then
+          shift
+          #TODO: delete old tracker id of MODIFICATION_VALUES
+          MODIFICATION_VALUES+=("'tracker_id':1")
+
         elif [ "$1" = "task" ]; then
           shift
           #TODO: delete old tracker id of MODIFICATION_VALUES
