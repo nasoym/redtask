@@ -71,27 +71,10 @@ function print_default() {
   local JSON="$1"
   local LEADING_SPACES="$2"
   #local FEATURE=$(echo "$JSON" | jq -r 'if .tracker_name == "Feature" then 1 else 0 end')
-  local FEATURE=$(echo "$JSON" | jq -r 'if .tracker.id == 2 then 1 else 0 end')
-  if [ "$FEATURE" -eq 1 ]; then
-    LINE="$(echo "$JSON" |\
-    jq -r \
-"\"$LEADING_SPACES\
-\(.id)\
- [\(.estimated_hours//\"-\"):\(.done_ratio//\"-\")%]\
- \(.status.name)\
-\(if ( (.cjson.tags != null) and ((.cjson.tags|length) > 0) ) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
-\(if (.category.name!=null) then \" (\(.category.name))\" else \"\" end)\
-\(if (.assigned_to.name!=null) then \" \(.assigned_to.name)\" else \"\" end):\
- \\\"\(.subject)\\\"\
-\"" |\
-    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
-#\(if (.release.release.name!=null) then \" (\(.release.release.id))\" else \"\" end)\
-#\(if (.release.release.name!=null) then \" \(.release.release.name)(\(.release.release.id))\" else \"\" end)\
-
-    tput setaf 5
-    echo "$LINE"
-    tput sgr0
-  else
+  #TODO: replace fixed issue tracker id with variable
+  #local FEATURE=$(echo "$JSON" | jq -r 'if .tracker.id == 4 then 1 else 0 end')
+  local TASK=$(echo "$JSON" | jq -r 'if .tracker.name == "Task" then 1 else 0 end')
+  if [ "$TASK" -eq 1 ]; then
     LINE="$(echo "$JSON" |\
     jq -r \
 "\"$LEADING_SPACES\
@@ -129,6 +112,27 @@ function print_default() {
       echo "$LINE"
       tput sgr0
     fi
+  #elif [ "$FEATURE" -eq 1 ]; then
+  else
+    LINE="$(echo "$JSON" |\
+    jq -r \
+"\"$LEADING_SPACES\
+\(.id)\
+ [\(.story_points//\"\"):\(.estimated_hours//\"\"):\(.done_ratio//\"-\")%]\
+ \(.status.name)\
+ \(.tracker.name)\
+\(if ( (.cjson.tags != null) and ((.cjson.tags|length) > 0) ) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
+\(if (.category.name!=null) then \" (\(.category.name))\" else \"\" end)\
+\(if (.assigned_to.name!=null) then \" \(.assigned_to.name)\" else \"\" end):\
+ \\\"\(.subject)\\\"\
+\"" |\
+    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
+
+    tput setaf 5
+    echo "$LINE"
+    tput sgr0
+
+
   fi
 }
 
