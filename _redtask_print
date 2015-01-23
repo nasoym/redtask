@@ -36,6 +36,11 @@ if ((.cjson.complexity!= null)or(.cjson.innovation!=null)or(.cjson.pairing!=null
 clx:\(.cjson.complexity//\"-\") inv:\(.cjson.innovation//\"-\") pair:\(.cjson.pairing//\"-\")\" else \"\" end" |\
     sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
 
+  echo -n "$(echo "$JSON" | jq -r "\
+if (.release.release.name != null) then \"\n${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}\
+release: \(.release.release.name) (\(.release.release.id))\" else \"\" end" |\
+    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
+
   NOTES="$(echo "$JSON" | jq -c "\
 if (.journals != null) then \
 [.journals[] | select(.notes != \"\") | { a: .user.name, b: .notes } ] \
@@ -51,12 +56,15 @@ note: \(.a): \(.b)\" "\
     )"
   fi
 
-  echo -n "$(echo "$JSON" | jq -r "\
-if (.release.release.name != null) then \"\n${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}\
-release: \(.release.release.name) (\(.release.release.id))\" else \"\" end" |\
-    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
-
-  echo
+  DESCRIPTION="$(echo "$JSON" | jq -r '.description//""')"
+  if [ -n "$DESCRIPTION" ];then
+    echo
+    echo "$DESCRIPTION" \
+    | sed -e "s/^/${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}/g" \
+    | sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
+  else
+    echo
+  fi
 }
 
 function print_default() {
