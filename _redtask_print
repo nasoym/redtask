@@ -8,7 +8,9 @@ function print_desc() {
   DESCRIPTION="$(echo "$JSON" | jq -r '.description//""')"
   if [ -n "$DESCRIPTION" ];then
     echo
-    echo "$DESCRIPTION" | sed -e "s/^/${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}/g"
+    echo "$DESCRIPTION" \
+    | sed -e "s/^/${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}/g" \
+    | sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
   else
     echo
   fi
