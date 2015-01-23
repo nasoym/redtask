@@ -17,7 +17,7 @@ if [ "$#" -ge 1 ]; then
     if [ -n "$IDS" ] && [ "$(wc -l <<<"$IDS")" -eq 1 ];then
       MODIFICATION_VALUES+=("'parent_issue_id':$IDS")
     elif [ -n "$IDS" ];then
-      echo "cannot create task for many parents!" 1>&2
+      echo "cannot set multiple parents for a issue!" 1>&2
       MODIFIER=""
     fi
 
