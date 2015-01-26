@@ -155,6 +155,13 @@ while true;do
         json_line_print "$TASK_JSON" print_desc
       done
 
+    elif [ "$1" = "lines:short" ]; then
+      shift
+      load_json_content_of_ids
+      for TASK_JSON in $( echo "$ALL_TASKS_JSON" | jq -c '.[]' ); do
+        json_line_print "$TASK_JSON" print_default
+      done
+
     elif [ $(echo "$1" | grep "lines:[a-zA-Z0-9_-]*") ]; then
       PRINT_COMMAND=$(echo "$1" | sed 's/^lines://g')
       shift
