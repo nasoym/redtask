@@ -67,34 +67,8 @@ while true; do
       echo "$( date +%F) : today"
 # \(.user.name)
 
-#    elif [ $(echo "$1" | grep "^spent:[0-9]*$") ]; then
-#      SPENT_HOURS=$(echo "$1" | sed 's/^spent://g')
-#      shift
-#      for ID in $IDS; do
-#        echo "'hours':'$SPENT_HOURS'" |\
-#        sed -e "s/$/,'activity_id':9/g" |\
-#        sed -e "s/$/,'issue_id':$ID/g" |\
-#        sed -e "s/^/{'time_entry':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
-#        curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/time_entries.json?key=$KEY" 
-#        echo
-#      done
-
-#    elif [ $(echo "$1" | grep "^spent:[0-9]*:[0-9]\{2\}-[0-9]\{2\}$") ]; then
-#      SPENT_HOURS=$(echo "$1" | sed 's/^spent:\(.*\):.*$/\1/g')
-#      SPENT_ON="$(date +%Y)-$(echo "$1" | sed 's/^spent:.*:\(.*\)$/\1/g')"
-#      shift
-#      for ID in $IDS; do
-#        echo "'hours':'$SPENT_HOURS'" |\
-#        sed -e "s/$/,'spent_on':'$SPENT_ON'/g" |\
-#        sed -e "s/$/,'activity_id':9/g" |\
-#        sed -e "s/$/,'issue_id':$ID/g" |\
-#        sed -e "s/^/{'time_entry':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
-#        curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/time_entries.json?key=$KEY" 
-#        echo
-#      done
-
-    #elif [ $(echo "$1" | grep "^spent:[0-9.]*:[0-9]\{2\}-[0-9]\{2\}:.*$") ]; then
     elif [ $(echo "$1" | grep "^spent:") ]; then
+      
       #SPENT_HOURS=$(echo "$1" | sed 's/^spent:\(.*\):.*:.*$/\1/g')
       #SPENT_ON="$(date +%Y)-$(echo "$1" | sed 's/^spent:.*:\(.*\):.*$/\1/g')"
       #COMMENTS="$(echo "$1" | sed 's/^spent:.*:.*:\(.*\)$/\1/g')"
@@ -105,6 +79,10 @@ while true; do
       #echo "PARAM_1:>$PARAM_1<"
       #echo "PARAM_2:>$PARAM_2<"
       #echo "PARAM_3:>$PARAM_3<"
+
+      # SPENT_HOURS: 4 or 4.5 or .5
+      # SPENT_ON: 03-14 or 15-03-14 or 2014-03-14 or emtpy (today)
+      # COMMENTS: any string
 
       if [[ "$PARAM_1" =~ ^[0-9]*\.?[0-9]+$ ]];then
         #echo "PARAM_1 one is spent time"
@@ -164,20 +142,6 @@ while true; do
         echo
       done
 
-
-#    elif [ $(echo "$1" | grep "^spent:[0-9]*:[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}$") ]; then
-#      SPENT_HOURS=$(echo "$1" | sed 's/^spent:\(.*\):.*$/\1/g')
-#      SPENT_ON=$(echo "$1" | sed 's/^spent:.*:\(.*\)$/\1/g')
-#      shift
-#      for ID in $IDS; do
-#        echo "'hours':'$SPENT_HOURS'" |\
-#        sed -e "s/$/,'spent_on':'$SPENT_ON'/g" |\
-#        sed -e "s/$/,'activity_id':9/g" |\
-#        sed -e "s/$/,'issue_id':$ID/g" |\
-#        sed -e "s/^/{'time_entry':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
-#        curl -X POST -H "Content-type:application/json" -s -3 -d @- "https://$SERVER/time_entries.json?key=$KEY" 
-#        echo
-#      done
     elif [ $(echo "$1" | grep "^del_time:[0-9]*$") ]; then
       TIME_ID=$(echo "$1" | sed 's/^del_time://g')
       shift
