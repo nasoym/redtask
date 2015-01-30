@@ -1,5 +1,6 @@
 #!/bin/bash
 
+load_json_content_of_ids
 while true;do
   if [ "$#" -ge 1 ]; then
 

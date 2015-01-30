@@ -220,13 +220,22 @@ if [ "$#" -ge 1 ]; then
             echo "no or more than one id with:'$CATEGORY_STRING' was found." 1>&2
           fi
 
-        elif [ $(echo "$1" | grep "^version:[0-9]*$") ]; then
+        elif [ $(echo "$1" | grep "\<version:[0-9]*") ]; then
           VERSION=$(echo "$1" | sed 's/^version://g')
+          shift
           if [ -z "$VERSION" ];then
             VERSION="null"
           fi
-          shift
           MODIFICATION_VALUES+=("'fixed_version_id':$VERSION")
+
+        elif [ $(echo "$1" | grep "\<parent:[0-9]*") ]; then
+          PARENT="$(echo "$1" | sed 's/^parent://g')"
+          shift
+          if [ -z "$PARENT" ];then
+            PARENT="null"
+          fi
+          #TODO: what if parent is already defined
+          MODIFICATION_VALUES+=("'parent_issue_id':$PARENT")
 
         elif [ $(echo "$1" | grep "\<version:[a-zA-Z0-9_-]*\>") ]; then
           VERSION_STRING="$(echo "$1" | sed 's/^version://g')"
@@ -238,17 +247,10 @@ if [ "$#" -ge 1 ]; then
             echo "no or more than one id with:'$VERSION_STRING' was found." 1>&2
           fi
 
-
         elif [ $(echo "$1" | grep "\<release:[0-9]*\>") ]; then
           RELEASE_ID="$(echo "$1" | sed 's/^release://g')"
           shift
           MODIFICATION_VALUES+=("'release_id':$RELEASE_ID")
-
-        elif [ $(echo "$1" | grep "\<parent:[0-9]*\>") ]; then
-          PARENT="$(echo "$1" | sed 's/^parent://g')"
-          shift
-          #TODO: what if parent is already defined
-          MODIFICATION_VALUES+=("'parent_issue_id':$PARENT")
 
         #TODO: elif [ "$(echo "$1" | grep "\<subject+:.*")" ]; then
         elif [ "$(echo "$1" | grep "\<subject:.*")" ]; then
