@@ -13,11 +13,10 @@ if [ "$#" -ge 1 ]; then
     shift
     MODIFIER="add"
     MODIFICATION_VALUES+=("'project_id':$PROJECT_ID")
-    #MODIFICATION_VALUES+=("'tracker_id':4")
     if [ -n "$IDS" ] && [ "$(wc -l <<<"$IDS")" -eq 1 ];then
       MODIFICATION_VALUES+=("'parent_issue_id':$IDS")
     elif [ -n "$IDS" ];then
-      echo "cannot set multiple parents for a issue!" 1>&2
+      echo "cannot set multiple parents for an issue!" 1>&2
       MODIFIER=""
     fi
 
