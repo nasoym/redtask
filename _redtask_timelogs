@@ -40,12 +40,13 @@ while true; do
 
       IDS=$(echo "$TIME_GROUPS" | jq -r -c '.[][] | .issue.id' | sort | uniq)
       #IDS=$(echo "$IDS" | sort | uniq)
+      ALL_TASKS_JSON=""
       load_json_content_of_ids
       TIME_IDS=$(echo "$TIME_ENTRIES"| jq '.[] | .id')
       for ID in $TIME_IDS;do
         JSON=$(echo "$TIME_ENTRIES" | jq -r ".[]| select(.id==$ID)")
         ISSUE_ID=$(echo "$JSON" | jq '.issue.id')
-        ISSUE_JSON=$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ISSUE_ID)")
+        ISSUE_JSON=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ISSUE_ID)")
         TIME_ENTRIES=$(echo "$TIME_ENTRIES" | jq -c -r "map(if(.id==$ID)then .issue_json=$ISSUE_JSON else . end)")
       done
 
