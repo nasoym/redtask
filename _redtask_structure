@@ -1,0 +1,59 @@
+#!/bin/bash
+
+while true;do
+  if [ "$#" -ge 1 ]; then
+
+    if [ "$1" = "flatten" ]; then
+      shift
+      load_json_content_of_ids
+      for ID in $IDS; do
+        #echo ">>$ID"
+        #echo "ORIGINSL:$ALL_TASKS_JSON"
+        JSON="$(echo "$ALL_TASKS_JSON" | jq -r -c ".[]| select(.id==$ID)")"
+        #echo "JSON:$JSON"
+        #TODO: only proceed if children are present
+        CHILDREN="$( echo "$JSON" | jq -c '.children')" 
+        #echo "CHILDREN:$CHILDREN"
+        ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+        jq -c "[.[] | if .id==$ID then .children=[] else . end]")
+        #jq -c "select(.id==$ID)|.children=[]" )
+
+        #echo "REMOVED:$ALL_TASKS_JSON"
+        ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+        jq -c ".+=$CHILDREN" )
+        #echo "APPENDED:$ALL_TASKS_JSON"
+      done
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+
+    elif [ "$1" = "children" ]; then
+      shift
+      ALL_TASKS_JSON="$(load_json_of_ids "$IDS" 1)"
+      ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
+
+    elif [ "$1" = "load_details" ]; then
+      #TODO: do not reload children if they are already loaded
+      shift
+      if [ -z "$ALL_TASKS_JSON" ] && [ -n "$IDS" ];then
+        #echo "ids are provided but no content was loaded so far"
+        load_json_content_of_ids
+      elif [ -z "$ALL_TASKS_JSON" ] && [ -z "$IDS" ];then
+        echo "neither ids nor content is provided"
+      elif [ -n "$ALL_TASKS_JSON" ] && [ -z "$IDS" ];then
+        #echo "content is provided but ids are not yet loaded"
+        IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+        ALL_TASKS_JSON=""
+        load_json_content_of_ids
+      elif [ -n "$ALL_TASKS_JSON" ] && [ -n "$IDS" ];then
+        #echo "ids and content are provided"
+        ALL_TASKS_JSON=""
+        load_json_content_of_ids
+      fi
+
+    else
+      break
+    fi
+  else
+    break
+  fi
+done
+
