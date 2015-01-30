@@ -46,7 +46,7 @@ function load_json_content_of_ids() {
     ALL_TASKS_JSON="$(load_json_of_ids "$IDS" 0)"
     ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
   elif [ -z "$ALL_TASKS_JSON" ] && [ -z "$IDS" ];then
-    echo "no content" 1>&2
+    #echo "no content" 1>&2
     ALL_TASKS_JSON="[]"
   fi
 }
