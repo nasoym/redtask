@@ -132,17 +132,27 @@ function print_default() {
     echo "$LINE"
     tput sgr0
 
-
   fi
 }
 
-function json_line_print(){
-  local JSON="$1"
+function print_children_by_their_parent_id(){
+  local IDS="$1"
   local PRINT_COMMAND="$2"
   local LEADING_SPACES="$3"
-  $PRINT_COMMAND "$JSON" "$LEADING_SPACES"
-  for CHILD_JSON in $(echo "$JSON" | jq -r -c 'if has("children") then .children[] else "" end'); do
-    json_line_print "$CHILD_JSON" "$PRINT_COMMAND" "$LEADING_SPACES$CHILD_LEADING_SPACES" 
+
+  if [ -z "$IDS" ]; then
+      local IDS="$(echo "$ALL_TASKS_JSON" | jq -c 'map(select(.parent==null)|{id:.id})')"
+  fi
+
+  for ID in $(ids_from_json_array "$IDS"); do
+    #echo ">$ID<"
+    JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
+    $PRINT_COMMAND "$JSON" "$LEADING_SPACES"
+    for CHILD_JSON in $( echo "$ALL_TASKS_JSON" | jq -c "map(select((.parent!=null) and(.parent.id==$ID) ))|.[]" ); do
+      CHILD_ID=$(echo "$CHILD_JSON" | jq -c '[{id:.id}]')
+      #echo "CHILD_ID: $CHILD_ID"
+      print_children_by_their_parent_id "$CHILD_ID" "$PRINT_COMMAND" "$LEADING_SPACES$CHILD_LEADING_SPACES" 
+    done
   done
 }
 
@@ -151,16 +161,12 @@ while true;do
     if [ "$1" = "lines" ]; then
       shift
       load_json_content_of_ids
-      for TASK_JSON in $( echo "$ALL_TASKS_JSON" | jq -c '.[]' ); do
-        json_line_print "$TASK_JSON" print_desc
-      done
+      print_children_by_their_parent_id "" print_default
 
-    elif [ "$1" = "lines:short" ]; then
+    elif [ "$1" = "lines:desc" ]; then
       shift
       load_json_content_of_ids
-      for TASK_JSON in $( echo "$ALL_TASKS_JSON" | jq -c '.[]' ); do
-        json_line_print "$TASK_JSON" print_default
-      done
+      print_children_by_their_parent_id "" print_desc
 
     elif [ $(echo "$1" | grep "lines:[a-zA-Z0-9_-]*") ]; then
       PRINT_COMMAND=$(echo "$1" | sed 's/^lines://g')
@@ -169,9 +175,7 @@ while true;do
         PRINT_COMMAND="print_command_details"
       fi
       load_json_content_of_ids
-      for TASK_JSON in $( echo "$ALL_TASKS_JSON" | jq -c '.[]' ); do
-        json_line_print "$TASK_JSON" "$PRINT_COMMAND"
-      done
+      print_children_by_their_parent_id "" "$PRINT_COMMAND"
 
     elif [ "$1" = "report_estimates" ]; then
       shift

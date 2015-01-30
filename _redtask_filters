@@ -94,23 +94,6 @@ while true;do
       fi
       IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
 
-    elif [[ $1 =~ ^hier($|(a$|ar$|arc$|arch$|archy$)) ]] || [ "$1" = "hrchy" ]; then
-      shift
-      load_json_content_of_ids
-      #TODO: what to do with issues whos parent is not in the json structure
-      #TODO: what to do with grandchildren
-      #TODO: what to do when the children structure is already filled in the minimal form
-      NO_PARENT="$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | select(has("parent")|not)]')"
-      WITH_PARENT="$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | select(has("parent"))]')"
-      IDS_WITH_PARENT="$(echo "$WITH_PARENT" | jq '.[]|.id')"
-      for ID in $IDS_WITH_PARENT; do
-        JSON="$(echo "$WITH_PARENT" | jq -r ".[]| select(.id==$ID)")"
-        PARENT="$(echo "$JSON" | jq '.parent.id')"
-        NO_PARENT="$(echo "$NO_PARENT" | jq -c "[.[] | if .id==$PARENT then .children+=[$JSON] else . end]")"
-      done
-      ALL_TASKS_JSON="$NO_PARENT"
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
-
     elif [ "$1" = "flatten" ]; then
       shift
       load_json_content_of_ids
