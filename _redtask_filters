@@ -6,65 +6,65 @@ while true;do
 
     if [ "$1" = "feature" ]; then
       shift
-      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+      FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
       jq -c "[.[]| select(.tracker.id == 2) ]" )
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      IDS="$( ids_from_json_array "$FILTERED_TASKS" )"
 
     elif [ "$1" = "bug" ]; then
       shift
-      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+      FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
       jq -c "[.[]| select(.tracker.id == 1) ]" )
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      IDS="$( ids_from_json_array "$FILTERED_TASKS" )"
 
     elif [ "$1" = "task" ]; then
       shift
-      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+      FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
       jq -c "[.[]| select(.tracker.id == 4) ]" )
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      IDS="$( ids_from_json_array "$FILTERED_TASKS" )"
 
     elif [ "$1" = "open" ]; then
       shift
-      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+      FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
       jq -c "[.[]| select((.status.id == $STATUS_NEW)or(.status.id==$STATUS_DOING)) ]" )
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      IDS="$( ids_from_json_array "$FILTERED_TASKS" )"
 
     elif [ $(echo "$1" | grep "filter:[a-zA-Z0-9_-]\{1,\}") ]; then
       VARIABLE_NAME=$(echo "$1" | sed 's/^filter://g')
       shift
       load_json_content_of_ids
-      ALL_TASKS_JSON="$(eval $VARIABLE_NAME)"
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      FILTERED_TASKS="$(eval $VARIABLE_NAME)"
+      IDS="$( ids_from_json_array "$FILTERED_TASKS" )"
 
     elif [ "$(echo "$1" | grep "\+[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
       TAG="$(echo "$1" | sed -e 's/^+//g')"
       shift
-      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+      FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
       jq -c "[.[]|\
       select( (.cjson.tags!=null) and (.cjson.tags|contains([\"$TAG\"])) )\
       ]" )
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      IDS="$( ids_from_json_array "$FILTERED_TASKS" )"
 
     elif [ "$(echo "$1" | grep "\-[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
       TAG="$(echo "$1" | sed -e 's/^-//g')"
       shift
-      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" |\
+      FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
       jq -c "[.[]|\
       select( (.cjson.tags==null) or (.cjson.tags|contains([\"$TAG\"])|not) )\
       ]" )
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      IDS="$( ids_from_json_array "$FILTERED_TASKS" )"
 
     elif [ "$1" = "unassign" ]; then
       shift
       load_json_content_of_ids
-      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.assigned_to==null)]" )
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.assigned_to==null)]" )
+      IDS="$( ids_from_json_array "$FILTERED_TASKS" )"
 
     elif [ $(echo "$1" | grep "\<category:[0-9]*\>") ]; then
       CATEGORY_ID=$(echo "$1" | sed 's/^category://g')
       shift
       load_json_content_of_ids
-      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.category.id==$CATEGORY_ID)]" )
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.category.id==$CATEGORY_ID)]" )
+      IDS="$( ids_from_json_array "$FILTERED_TASKS" )"
 
     elif [ $(echo "$1" | grep "\<category:[a-zA-Z0-9_-]*\>") ]; then
       CATEGORY_STRING=$(echo "$1" | sed 's/^category://g')
@@ -72,17 +72,17 @@ while true;do
       load_json_content_of_ids
       MATCHING_CATEGORY_ID="$(category_by_name $CATEGORY_STRING)"
       if [ -n "$MATCHING_CATEGORY_ID" ];then
-        ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.category.id==$MATCHING_CATEGORY_ID)]" )
+        FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.category.id==$MATCHING_CATEGORY_ID)]" )
       fi
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      IDS="$( ids_from_json_array "$FILTERED_TASKS" )"
 
     elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
       USER_ID=$(echo "$1" | sed 's/^assign://g')
       shift
       load_json_content_of_ids
       #TODO: how to provide a list of assignees
-      ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.assigned_to.id==$USER_ID)]" )
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.assigned_to.id==$USER_ID)]" )
+      IDS="$( ids_from_json_array "$FILTERED_TASKS" )"
 
     elif [ $(echo "$1" | grep "\<assign:[a-zA-Z0-9_-]*\>") ]; then
       USER_STRING=$(echo "$1" | sed 's/^assign://g')
@@ -91,9 +91,9 @@ while true;do
       #TODO: how to provide a list of assignees
       MATCHING_USER_ID="$(project_member_by_name $USER_STRING)"
       if [ -n "$MATCHING_USER_ID" ];then
-        ALL_TASKS_JSON=$(echo "$ALL_TASKS_JSON" | jq -c "[.[]| select(.assigned_to.id==$MATCHING_USER_ID)]" )
+        FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.assigned_to.id==$MATCHING_USER_ID)]" )
       fi
-      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      IDS="$( ids_from_json_array "$FILTERED_TASKS" )"
 
     else
       break

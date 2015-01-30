@@ -45,7 +45,7 @@ while true; do
       for ID in $TIME_IDS;do
         JSON=$(echo "$TIME_ENTRIES" | jq -r ".[]| select(.id==$ID)")
         ISSUE_ID=$(echo "$JSON" | jq '.issue.id')
-        ISSUE_JSON=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ISSUE_ID)")
+        ISSUE_JSON=$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ISSUE_ID)")
         TIME_ENTRIES=$(echo "$TIME_ENTRIES" | jq -c -r "map(if(.id==$ID)then .issue_json=$ISSUE_JSON else . end)")
       done
 

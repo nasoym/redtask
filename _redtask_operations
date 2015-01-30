@@ -62,7 +62,7 @@ if [ "$#" -ge 1 ]; then
     load_json_content_of_ids
     echo "delete ?:"
     for ID in $IDS; do
-      JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
+      JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
       echo -n "$ID:$(echo "$JSON" | jq -r '.subject')"
       read -p "   [y|n]" -n 1 -r CONFIRM
       echo
@@ -75,7 +75,7 @@ if [ "$#" -ge 1 ]; then
     shift
     load_json_content_of_ids
     for ID in $IDS; do
-      JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
+      JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
       ESTIMATED_HOURS="$(echo "$JSON" | jq -r '.estimated_hours')"
       #echo "$ID:>$ESTIMATED_HOURS<"
       write_issue $ID "'remaining_hours':$ESTIMATED_HOURS"
@@ -85,7 +85,7 @@ if [ "$#" -ge 1 ]; then
     shift
     load_json_content_of_ids
     for ID in $IDS; do
-      JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
+      JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
       OLD_SUBJECT="$(echo "$JSON" | jq -r '.subject')"
       NEW_SUBJECT="$(echo "$OLD_SUBJECT" | EDITOR="vim -u NONE" vipe)"
       write_issue $ID "'subject':'$NEW_SUBJECT'"
@@ -95,7 +95,7 @@ if [ "$#" -ge 1 ]; then
     shift
     load_json_content_of_ids
     for ID in $IDS; do
-      JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
+      JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
       OLD_DESCRIPTION="$(echo "$JSON" | jq -r '.description//""')"
       NEW_DESCRIPTION="$(echo "$OLD_DESCRIPTION" | perl -p -e 's/\r//g'| EDITOR="vim -u NONE" vipe)"
       write_issue $ID "'description':'$NEW_DESCRIPTION'"
@@ -105,7 +105,7 @@ if [ "$#" -ge 1 ]; then
     shift
     load_json_content_of_ids
     for ID in $IDS; do
-      JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
+      JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
       OLD_DELIVERABLE="$(echo "$JSON" | jq -r '.cjson.deliverable//""')"
       NEW_DELIVERABLE="$(echo "$OLD_DELIVERABLE" | EDITOR="vim -u NONE" vipe)"
       LOCAL_CUSTOM_JSON_MODIFIER=".deliverable=\"$NEW_DELIVERABLE\""
@@ -117,7 +117,7 @@ if [ "$#" -ge 1 ]; then
     shift
     load_json_content_of_ids
     for ID in $IDS; do
-      JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
+      JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
       OLD_DELIVERABLE="$(echo "$JSON" | jq -r '.cjson.requirements//""')"
       NEW_DELIVERABLE="$(echo "$OLD_DELIVERABLE" | EDITOR="vim -u NONE" vipe)"
       LOCAL_CUSTOM_JSON_MODIFIER=".requirements=\"$NEW_DELIVERABLE\""
@@ -333,7 +333,7 @@ if [ "$#" -ge 1 ]; then
 #          for ID in $IDS; do
 #            if [ -n "$APPEND" ]; then
 #              load_json_content_of_ids
-#              OLD_VALUE="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)|.$KEY_NAME")"
+#              OLD_VALUE="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)|.$KEY_NAME")"
 #              NEW_VALUE="${OLD_VALUE} ${VALUE_ARGUMENT}"
 #            else
 #              NEW_VALUE="$VALUE_ARGUMENT"
@@ -349,7 +349,7 @@ if [ "$#" -ge 1 ]; then
     #
     #      for ID in $IDS
     #      do
-    #        OLD_VALUE=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)|.description")
+    #        OLD_VALUE=$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)|.description")
     #        if [ -n "$APPEND" ]; then
     #          if [ $(assert_json "$OLD_VALUE") ]; then
     #            #redtask 3126 des "{\\\"hi\\\":4}"
@@ -391,7 +391,7 @@ if [ "$#" -ge 1 ]; then
         #echo "$FINAL_MODIFICATION_STRING"
         load_json_content_of_ids
         for ID in $IDS; do
-          JSON=$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")
+          JSON=$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")
           LOCAL_FINAL_MODIFICATION_STRING="$FINAL_MODIFICATION_STRING"
           if [ -n "$CUSTOM_JSON_MODIFIER" ];then
             if [ -n "$LOCAL_FINAL_MODIFICATION_STRING" ];then

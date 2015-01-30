@@ -141,7 +141,7 @@ function print_children_by_their_parent_id(){
   local LEADING_SPACES="$3"
 
   if [ -z "$IDS" ]; then
-      local IDS="$(echo "$ALL_TASKS_JSON" | jq -c 'map(select(.parent==null)|{id:.id})')"
+      local IDS="$(echo "$FILTERED_TASKS" | jq -c 'map(select(.parent==null)|{id:.id})')"
   fi
 
   for ID in $(ids_from_json_array "$IDS"); do
@@ -156,9 +156,34 @@ function print_children_by_their_parent_id(){
   done
 }
 
+function print_list(){
+  local PRINT_COMMAND="$1"
+  local LEADING_SPACES="$2"
+
+  JSON="$(echo "$ALL_TASKS_JSON" | jq -c '.[]')"
+  for JSON in $( echo "$FILTERED_TASKS" | jq -c ".[]" ); do
+    $PRINT_COMMAND "$JSON" "$LEADING_SPACES"
+  done
+}
+
 while true;do
   if [ "$#" -ge 1 ]; then
-    if [ "$1" = "lines" ]; then
+
+    if [ "$1" = "list" ]; then
+      shift
+      load_json_content_of_ids
+      print_list print_default
+
+    elif [ $(echo "$1" | grep "list:[a-zA-Z0-9_-]*") ]; then
+      PRINT_COMMAND=$(echo "$1" | sed 's/^list://g')
+      shift
+      if [ -z "$PRINT_COMMAND" ]; then
+        PRINT_COMMAND="print_details"
+      fi
+      load_json_content_of_ids
+      print_list "$PRINT_COMMAND"
+
+    elif [ "$1" = "lines" ]; then
       shift
       load_json_content_of_ids
       print_children_by_their_parent_id "" print_default
@@ -172,7 +197,7 @@ while true;do
       PRINT_COMMAND=$(echo "$1" | sed 's/^lines://g')
       shift
       if [ -z "$PRINT_COMMAND" ]; then
-        PRINT_COMMAND="print_command_details"
+        PRINT_COMMAND="print_details"
       fi
       load_json_content_of_ids
       print_children_by_their_parent_id "" "$PRINT_COMMAND"
@@ -181,7 +206,7 @@ while true;do
       shift
       load_json_content_of_ids
       TOTAL_HOURS="0 "
-      for TASK_JSON in $( echo "$ALL_TASKS_JSON" | jq -c '.[]' ); do
+      for TASK_JSON in $( echo "$FILTERED_TASKS" | jq -c '.[]' ); do
         HOURS=$(echo "$TASK_JSON" | jq '.estimated_hours//0')
         TOTAL_HOURS+=" + $HOURS"
       done
@@ -191,12 +216,12 @@ while true;do
     elif [ $(echo "$1" | grep "^report$") ]; then
       shift
       load_json_content_of_ids
-      #TOTAL_ESTIMATED=$(echo "$ALL_TASKS_JSON" | jq '[.[] | .estimated_hours] | add')
-      #TOTAL_ESTIMATED=$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | .estimated_hours]')
+      #TOTAL_ESTIMATED=$(echo "$FILTERED_TASKS" | jq '[.[] | .estimated_hours] | add')
+      #TOTAL_ESTIMATED=$(echo "$FILTERED_TASKS" | jq -c '[.[] | .estimated_hours]')
       #echo "total estimated hours: $TOTAL_ESTIMATED"
       TOTAL_HOURS="0 "
       TOTAL_HOURS_WITH_FACTOR="0 "
-      for TASK_JSON in $( echo "$ALL_TASKS_JSON" | jq -c '.[]' ); do
+      for TASK_JSON in $( echo "$FILTERED_TASKS" | jq -c '.[]' ); do
         ID=$(echo "$TASK_JSON" | jq '.id')
         HOURS=$(echo "$TASK_JSON" | jq '.estimated_hours//0')
         COMPLEXITY=$(echo "$TASK_JSON" | jq '.cjson.complexity//0')
@@ -239,12 +264,12 @@ while true;do
     elif [ $(echo "$1" | grep "^report:short$") ]; then
       shift
       load_json_content_of_ids
-      #TOTAL_ESTIMATED=$(echo "$ALL_TASKS_JSON" | jq '[.[] | .estimated_hours] | add')
-      #TOTAL_ESTIMATED=$(echo "$ALL_TASKS_JSON" | jq -c '[.[] | .estimated_hours]')
+      #TOTAL_ESTIMATED=$(echo "$FILTERED_TASKS" | jq '[.[] | .estimated_hours] | add')
+      #TOTAL_ESTIMATED=$(echo "$FILTERED_TASKS" | jq -c '[.[] | .estimated_hours]')
       #echo "total estimated hours: $TOTAL_ESTIMATED"
       TOTAL_HOURS="0 "
       TOTAL_HOURS_WITH_FACTOR="0 "
-      for TASK_JSON in $( echo "$ALL_TASKS_JSON" | jq -c '.[]' ); do
+      for TASK_JSON in $( echo "$FILTERED_TASKS" | jq -c '.[]' ); do
         ID=$(echo "$TASK_JSON" | jq '.id')
         HOURS=$(echo "$TASK_JSON" | jq '.estimated_hours//0')
         COMPLEXITY=$(echo "$TASK_JSON" | jq '.cjson.complexity//0')
@@ -287,12 +312,12 @@ while true;do
     elif [ "$1" = "pretty" ]; then
       shift
       load_json_content_of_ids
-      echo "$ALL_TASKS_JSON" | jq '.'
+      echo "$FILTERED_TASKS" | jq '.'
 
     elif [ "$1" = "json" ]; then
       shift
       load_json_content_of_ids
-      echo "$ALL_TASKS_JSON"
+      echo "$FILTERED_TASKS"
 
     elif [ "$1" = "ids" ]; then
       shift
