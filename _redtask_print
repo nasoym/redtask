@@ -22,21 +22,6 @@ function print_details() {
   print_default "$JSON" "$LEADING_SPACES" | tr -d '\n'
 
   echo -n "$(echo "$JSON" | jq -r "\
-if (.cjson.deliverable != null) then \"\n${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}deliverable:\
-'\(.cjson.deliverable)'\" else \"\" end" |\
-    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
-
-  echo -n "$(echo "$JSON" | jq -r "\
-if (.cjson.requirements != null) then \"\n${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}requirements:\
-'\(.cjson.requirements)'\" else \"\" end" |\
-    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
-
-  echo -n "$(echo "$JSON" | jq -r "\
-if ((.cjson.complexity!= null)or(.cjson.innovation!=null)or(.cjson.pairing!=null)) then \"\n${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}\
-clx:\(.cjson.complexity//\"-\") inv:\(.cjson.innovation//\"-\") pair:\(.cjson.pairing//\"-\")\" else \"\" end" |\
-    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
-
-  echo -n "$(echo "$JSON" | jq -r "\
 if (.release.release.name != null) then \"\n${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}\
 release: \(.release.release.name) (\(.release.release.id))\" else \"\" end" |\
     sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
@@ -81,9 +66,6 @@ function print_default() {
 \(.id)\
  [\
 \(.estimated_hours//\"-\")\
-\(if (.cjson.complexity!= null) then \" x\(.cjson.complexity)\" else \"\" end)\
-\(if (.cjson.innovation!= null) then \" i\(.cjson.innovation)\" else \"\" end)\
-\(if (.cjson.pairing!= null) then \" p\(.cjson.pairing)\" else \"\" end)\
 ]\
  \(.status.name)\
 \(if ( (.cjson.tags != null) and ((.cjson.tags|length) > 0) ) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\

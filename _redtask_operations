@@ -101,30 +101,6 @@ if [ "$#" -ge 1 ]; then
       write_issue $ID "'description':'$NEW_DESCRIPTION'"
     done
 
-  elif [ "$1" = "deliver_edit" ]; then
-    shift
-    load_json_content_of_ids
-    for ID in $IDS; do
-      JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
-      OLD_DELIVERABLE="$(echo "$JSON" | jq -r '.cjson.deliverable//""')"
-      NEW_DELIVERABLE="$(echo "$OLD_DELIVERABLE" | EDITOR="vim -u NONE" vipe)"
-      LOCAL_CUSTOM_JSON_MODIFIER=".deliverable=\"$NEW_DELIVERABLE\""
-      LOCAL_FINAL_MODIFICATION_STRING="$(modifier_string_for_custom_json "$JSON" "$LOCAL_CUSTOM_JSON_MODIFIER")"
-      write_issue $ID "$LOCAL_FINAL_MODIFICATION_STRING"
-    done
-
-  elif [ "$1" = "require_edit" ]; then
-    shift
-    load_json_content_of_ids
-    for ID in $IDS; do
-      JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
-      OLD_DELIVERABLE="$(echo "$JSON" | jq -r '.cjson.requirements//""')"
-      NEW_DELIVERABLE="$(echo "$OLD_DELIVERABLE" | EDITOR="vim -u NONE" vipe)"
-      LOCAL_CUSTOM_JSON_MODIFIER=".requirements=\"$NEW_DELIVERABLE\""
-      LOCAL_FINAL_MODIFICATION_STRING="$(modifier_string_for_custom_json "$JSON" "$LOCAL_CUSTOM_JSON_MODIFIER")"
-      write_issue $ID "$LOCAL_FINAL_MODIFICATION_STRING"
-    done
-
   fi
 
   if [ -n "$MODIFIER" ];then
@@ -132,11 +108,7 @@ if [ "$#" -ge 1 ]; then
     while true;do
       if [ "$#" -ge 1 ]; then
 
-        if [ "$1" = "append" ]; then
-          shift
-          APPEND=1
-
-        elif [ "$1" = "bug" ]; then
+        if [ "$1" = "bug" ]; then
           shift
           #TODO: delete old tracker id of MODIFICATION_VALUES
           MODIFICATION_VALUES+=("'tracker_id':1")
@@ -234,7 +206,6 @@ if [ "$#" -ge 1 ]; then
           if [ -z "$PARENT" ];then
             PARENT="null"
           fi
-          #TODO: what if parent is already defined
           MODIFICATION_VALUES+=("'parent_issue_id':$PARENT")
 
         elif [ $(echo "$1" | grep "\<version:[a-zA-Z0-9_-]*\>") ]; then
@@ -252,7 +223,6 @@ if [ "$#" -ge 1 ]; then
           shift
           MODIFICATION_VALUES+=("'release_id':$RELEASE_ID")
 
-        #TODO: elif [ "$(echo "$1" | grep "\<subject+:.*")" ]; then
         elif [ "$(echo "$1" | grep "\<subject:.*")" ]; then
           SUBJECT_STRING="$(echo "$1" | sed -e 's/^subject://g')"
           shift

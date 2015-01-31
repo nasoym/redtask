@@ -174,8 +174,3 @@ function parse_custom_json_field() {
   echo "$JSON_CONTENT" 
 }
 
-#TODO:
-function load_json_content_of_children() {
-  :
-}
-
