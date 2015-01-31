@@ -41,6 +41,10 @@ function current_ids() {
   jq '.issues[] | .id'
 }
 
+function fixture() {
+  cat $FIXTURE
+}
+
 function fixture_01() {
   cat $SCRIPT_PATH/fixture_01.json | tr -d '\n'
 }
