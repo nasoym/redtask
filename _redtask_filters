@@ -61,6 +61,12 @@ while true;do
       load_json_content_of_ids
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.assigned_to==null)]" )
 
+    elif [ $(echo "$1" | grep "\<id:[0-9]*\>") ]; then
+      ID=$(echo "$1" | sed 's/^id://g')
+      shift
+      load_json_content_of_ids
+      NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.id==$ID)]" )
+
     elif [ $(echo "$1" | grep "\<category:[0-9]*\>") ]; then
       CATEGORY_ID=$(echo "$1" | sed 's/^category://g')
       shift
