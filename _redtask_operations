@@ -3,6 +3,7 @@
 MODIFIER=""
 MODIFICATION_VALUES=()
 CUSTOM_JSON_MODIFIER=""
+CUSTOM_VALUES=()
 
 if [ "$#" -ge 1 ]; then
   if [ "$1" = "mo" ]; then
@@ -228,118 +229,29 @@ if [ "$#" -ge 1 ]; then
           shift
           MODIFICATION_VALUES+=("'subject':'$SUBJECT_STRING'")
 
-        #elif [ "$(echo "$1" | grep "\<deliverable:.*")" ]; then
-        #  STRING="$(echo "$1" | sed -e 's/^deliverable://g')"
-        elif [ "$(echo "$1" | grep "\<deliver:.*")" ]; then
-          STRING="$(echo "$1" | sed -e 's/^deliver://g')"
+        elif [ "$(echo "$1" | grep "\<key:[a-z]*:.*")" ]; then
+          KEY_NAME="$(echo "$1" | sed -e 's/^key:\([a-z]*\):.*$/\1/g')"
+          VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^key:[a-z]*:\(.*\)$/\1/g')"
           shift
-          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-            CUSTOM_JSON_MODIFIER+="|"
-          fi
-          CUSTOM_JSON_MODIFIER+=".deliverable=\"$STRING\""
+          #echo "KEY: $KEY_NAME"
+          #echo "VALUE: $VALUE_ARGUMENT"
+          CUSTOM_VALUES+=("@$KEY_NAME:$VALUE_ARGUMENT")
 
-        elif [ "$(echo "$1" | grep "\<require:.*")" ]; then
-          STRING="$(echo "$1" | sed -e 's/^require://g')"
-          shift
-          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-            CUSTOM_JSON_MODIFIER+="|"
-          fi
-          CUSTOM_JSON_MODIFIER+=".requirements=\"$STRING\""
-
-        elif [ $(echo "$1" | grep "\<pair:[0-9]*\>") ]; then
-          VALUE="$(echo "$1" | sed 's/^pair://g')"
-          shift
-          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-            CUSTOM_JSON_MODIFIER+="|"
-          fi
-          CUSTOM_JSON_MODIFIER+=".pairing=$VALUE"
-
-        elif [ $(echo "$1" | grep "^clx:[0-9]*$") ]; then
-          VALUE="$(echo "$1" | sed 's/^clx://g')"
-          shift
-          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-            CUSTOM_JSON_MODIFIER+="|"
-          fi
-          CUSTOM_JSON_MODIFIER+=".complexity=$VALUE"
-
-        elif [ $(echo "$1" | grep "^ino:[0-9]*$") ]; then
-          VALUE="$(echo "$1" | sed 's/^ino://g')"
-          shift
-          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-            CUSTOM_JSON_MODIFIER+="|"
-          fi
-          CUSTOM_JSON_MODIFIER+=".innovation=$VALUE"
-
-        elif [ "$(echo "$1" | grep "\+[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
-          TAG="$(echo "$1" | sed -e 's/^+//g')"
-          shift
-          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-            CUSTOM_JSON_MODIFIER+="|"
-          fi
-          CUSTOM_JSON_MODIFIER+=".tags+=[\"$TAG\"]"
-
-        elif [ "$(echo "$1" | grep "\-[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
-          TAG="$(echo "$1" | sed -e 's/^-//g')"
-          shift
-          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-            CUSTOM_JSON_MODIFIER+="|"
-          fi
-          CUSTOM_JSON_MODIFIER+=".tags-=[\"$TAG\"]"
-
-        elif [ "$(echo "$1" | grep "\<cjson:.*")" ]; then
-          VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^cjson://g')"
-          shift
-          #redtask 3277 cjson '.tags+=["hi"]'
-          #redtask 3277 cjson '.+{"c":4}'
-          #redtask 3277 cjson '.b=5'
-          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-            CUSTOM_JSON_MODIFIER+="|"
-          fi
-          CUSTOM_JSON_MODIFIER+="$VALUE_ARGUMENT"
-
-#        elif [ "$(echo "$1" | grep "\<key:[a-z]*:.*")" ]; then
-#          KEY_NAME="$(echo "$1" | sed -e 's/^key:\([a-z]*\):.*$/\1/g')"
-#          VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^key:[a-z]*:\(.*\)$/\1/g')"
+#        elif [ "$(echo "$1" | grep "\+[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
+#          TAG="$(echo "$1" | sed -e 's/^+//g')"
 #          shift
-#          #TODO: append will not work when applying to several ids
-#          for ID in $IDS; do
-#            if [ -n "$APPEND" ]; then
-#              load_json_content_of_ids
-#              OLD_VALUE="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)|.$KEY_NAME")"
-#              NEW_VALUE="${OLD_VALUE} ${VALUE_ARGUMENT}"
-#            else
-#              NEW_VALUE="$VALUE_ARGUMENT"
-#            fi
-#            MODIFICATION_VALUES+=("'$KEY_NAME':'$NEW_VALUE'")
-#          done
-
-    #    elif [ "$1" = "json" ] && [ "$#" -ge 2 ]; then
-    #      VALUE_ARGUMENT="$2"
-    #      shift
-    #      shift
-    #      load_json_content_of_ids
-    #
-    #      for ID in $IDS
-    #      do
-    #        OLD_VALUE=$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)|.description")
-    #        if [ -n "$APPEND" ]; then
-    #          if [ $(assert_json "$OLD_VALUE") ]; then
-    #            #redtask 3126 des "{\\\"hi\\\":4}"
-    #            # $2='.a="4" | .b=5'
-    #            if [ -z "$OLD_VALUE" ];then
-    #              #echo "old description was empty"
-    #              OLD_VALUE="{}"
-    #            fi
-    #            NEW_VALUE=$(echo "$OLD_VALUE" | jq -c "$VALUE_ARGUMENT" | sed -e 's/"/\\\"/g')
-    #            write_issue $ID "'description':'$NEW_VALUE'"
-    #          else
-    #            echo "old description was not a json content"
-    #          fi
-    #        else
-    #          NEW_VALUE=$(echo "$VALUE_ARGUMENT" | sed -e 's/"/\\\"/g')
-    #          write_issue $ID "'description':'$NEW_VALUE'"
-    #        fi
-    #      done
+#          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+#            CUSTOM_JSON_MODIFIER+="|"
+#          fi
+#          CUSTOM_JSON_MODIFIER+=".tags+=[\"$TAG\"]"
+#
+#        elif [ "$(echo "$1" | grep "\-[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
+#          TAG="$(echo "$1" | sed -e 's/^-//g')"
+#          shift
+#          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
+#            CUSTOM_JSON_MODIFIER+="|"
+#          fi
+#          CUSTOM_JSON_MODIFIER+=".tags-=[\"$TAG\"]"
 
         else
           break
@@ -365,11 +277,33 @@ if [ "$#" -ge 1 ]; then
         for ID in $IDS; do
           JSON=$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")
           LOCAL_FINAL_MODIFICATION_STRING="$FINAL_MODIFICATION_STRING"
-          if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-            if [ -n "$LOCAL_FINAL_MODIFICATION_STRING" ];then
-              LOCAL_FINAL_MODIFICATION_STRING+=","
+
+          if [ ${#CUSTOM_VALUES[@]} -ge 1 ];then
+            DESCRIPTION=$(echo "$JSON" | jq -r '.description//""')
+            for I in "${CUSTOM_VALUES[@]}"; do
+                KEY_NAME=$(echo "$I" | sed -e 's/^\(@[^:]*\):.*$/\1/g')
+                VALUE=$(echo "$I" | sed -e 's/^@[^:]*:\(.*\)$/\1/g')
+                #echo "KEY_NAME:$KEY_NAME" 1>&2
+                #echo "VALUE:$VALUE" 1>&2
+                DESCRIPTION="$(echo "$DESCRIPTION" | sed "/^$KEY_NAME:/d")"
+                #echo "description :>$DESCRIPTION<" 1>&2
+                if [ -n "$DESCRIPTION" ] ;then
+                  #echo "description is not empty" 1>&2
+                  DESCRIPTION=$(echo "$DESCRIPTION\n")
+                fi
+                #echo "description :>$DESCRIPTION<" 1>&2
+                DESCRIPTION=$(echo -e "$DESCRIPTION$KEY_NAME:$VALUE")
+#                echo "---------------------"
+#                echo "DESCRIPTION: $DESCRIPTION"
+#                echo "---------------------"
+            done
+            DESCRIPTION="$(echo "$DESCRIPTION" | sed -e 's/"/\\"/g' -e "s/'//"g )"
+            CUSTOM_MODIFIER="'description':'$DESCRIPTION'"
+            if [ -z "$LOCAL_FINAL_MODIFICATION_STRING" ];then
+              LOCAL_FINAL_MODIFICATION_STRING="$CUSTOM_MODIFIER"
+            else
+              LOCAL_FINAL_MODIFICATION_STRING+=",$CUSTOM_MODIFIER"
             fi
-            LOCAL_FINAL_MODIFICATION_STRING+="$(modifier_string_for_custom_json "$JSON" "$CUSTOM_JSON_MODIFIER")"
           fi
           write_issue $ID "$LOCAL_FINAL_MODIFICATION_STRING"
         done
@@ -377,12 +311,7 @@ if [ "$#" -ge 1 ]; then
 
       "add")
         LOCAL_FINAL_MODIFICATION_STRING="$FINAL_MODIFICATION_STRING"
-        if [ -n "$CUSTOM_JSON_MODIFIER" ];then
-          if [ -n "$LOCAL_FINAL_MODIFICATION_STRING" ];then
-            LOCAL_FINAL_MODIFICATION_STRING+=","
-          fi
-          LOCAL_FINAL_MODIFICATION_STRING+="$(modifier_string_for_custom_json "{}" "$CUSTOM_JSON_MODIFIER")"
-        fi
+        #TODO: add custom key values to description
         echo "$LOCAL_FINAL_MODIFICATION_STRING" |\
         sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g" |\
         curl -X POST -H "Content-type:application/json" -s -d @- "https://$SERVER/issues.json?key=$KEY" |\

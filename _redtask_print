@@ -9,6 +9,7 @@ function print_desc() {
   if [ -n "$DESCRIPTION" ];then
     echo
     echo "$DESCRIPTION" \
+    | sed '/@[^:]*:/d' \
     | sed -e "s/^/${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}/g" \
     | sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
   else
@@ -67,6 +68,7 @@ function print_default() {
  [\
 \(.estimated_hours//\"-\")\
 ]\
+\(if (.cjson.est!= null) then \"\(.cjson.est)\" else \"\" end)\
  \(.status.name)\
 \(if ( (.cjson.tags != null) and ((.cjson.tags|length) > 0) ) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
 \(if (.category.name!=null) then \" (\(.category.name))\" else \"\" end)\
@@ -167,6 +169,7 @@ while true;do
 
     elif [ "$1" = "lines" ]; then
       shift
+      #TODO: nothing is printed if no one has parents
       load_json_content_of_ids
       print_children_by_their_parent_id "" print_default
 

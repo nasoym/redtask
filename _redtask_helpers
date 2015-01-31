@@ -60,22 +60,6 @@ function write_issue() {
   #echo "$CURL_STRING"
 }
 
-function modifier_string_for_custom_json() {
-  local JSON="$1"
-  local JSON_MODIFICATION="$2"
-  local OLD_VALUE=$(echo "$JSON" | jq -r ".$CUSTOM_JSON_KEY")
-  if [ $(assert_json "$OLD_VALUE") ]; then
-    if [ -z "$OLD_VALUE" ];then
-      local OLD_VALUE="{}"
-    fi
-  else
-    local OLD_VALUE="{}"
-    #echo "old description was not a json content!" 1>&2
-  fi
-  local NEW_VALUE=$(echo "$OLD_VALUE" | jq -c "$JSON_MODIFICATION" | sed -e 's/"/\\\"/g')
-  echo "'$CUSTOM_JSON_KEY':'$NEW_VALUE'"
-}
-
 function trackers() {
   curl -s  "https://$SERVER/trackers.json?key=$KEY" \
   | jq -c '.trackers'
@@ -154,23 +138,27 @@ function load_json_content_for_ids() {
 function parse_custom_json_field() {
   local JSON_CONTENT="$1"
   local CONTENT_IDS="$2"
-#  echo "parse_custom_json_field" 1>&2
-#  for ID in $CONTENT_IDS; do
-#    local DESCRIPTION=$(echo "$JSON_CONTENT" | jq -r -c ".[]| select(.id==$ID) |.$CUSTOM_JSON_KEY")
-#    echo "DESCRIPTION:>$DESCRIPTION<" 1>&2
-#    local JSON_LINE="$(echo "$DESCRIPTION" | grep -m 1 "^@json:")"
-#    echo "JSON_LINE:>$JSON_LINE<" 1>&2
-#    if [ -n "$JSON_LINE" ];then
-#      local CUSTOM_JSON="$(echo "$JSON_LINE" | sed -e 's/^@json://g')"
-#      #echo "CUSTOM_JSON:>$CUSTOM_JSON<" 1>&2
-#      if [ $(assert_json "$CUSTOM_JSON") ];then
-#          #echo "is valid json" 1>&2
-#          local JSON_CONTENT=$(echo "$JSON_CONTENT" |\
-#            jq -c "[.[] | if .id==$ID then .cjson=$CUSTOM_JSON else . end]"\
-#            )
-#      fi
-#    fi
-#  done
+  #echo "parse_custom_json_field" 1>&2
+  for ID in $CONTENT_IDS; do
+    local DESCRIPTION=$(echo "$JSON_CONTENT" | jq -r -c ".[]| select(.id==$ID) |.$CUSTOM_JSON_KEY")
+    #echo "ID:$ID" 1>&2
+    #echo "DESCRIPTION:>$DESCRIPTION<" 1>&2
+    #for I in $(echo "$DESCRIPTION" | grep "^@[^:]*:.*$"); do
+    #  echo "$I" | sed -e 's/^@//g' -e 's/^\([^:]*\):/\1":/g' -e 's/^/{"/g' -e 's/$/}/g' 1>&2
+    #done
+    local CUSTOM_JSON="$(for I in $(echo "$DESCRIPTION" | grep "^@[^:]*:.*$"); do echo "$I" | sed -e 's/^@//g' -e 's/^\([^:]*\):/\1":/g' -e 's/^/{"/g' -e 's/$/}/g'; done | jq -s -c ".|add" 2>/dev/null || echo "")"
+    #echo ">>>$CUSTOM_JSON<<<" 1>&2
+    if [ "$CUSTOM_JSON" != "null" ] && [ -n "$CUSTOM_JSON" ] ;then
+      if [ $(assert_json "$CUSTOM_JSON") ]; then
+        #echo "valid json" 1>&2
+        local JSON_CONTENT=$(echo "$JSON_CONTENT" |\
+          jq -c "[.[] | if .id==$ID then .cjson=$CUSTOM_JSON else . end]"\
+          )
+      #else
+      #  echo "invalid json" 1>&2
+      fi
+    fi
+  done
   echo "$JSON_CONTENT" 
 }
 
