@@ -137,9 +137,11 @@ function print_children_by_their_parent_id(){
 
   for ID in $(ids_from_json_array "$IDS"); do
     #echo ">$ID<"
-    JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
+    #JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
+    JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
     $PRINT_COMMAND "$JSON" "$LEADING_SPACES"
-    for CHILD_JSON in $( echo "$ALL_TASKS_JSON" | jq -c "map(select((.parent!=null) and(.parent.id==$ID) ))|.[]" ); do
+    #for CHILD_JSON in $( echo "$ALL_TASKS_JSON" | jq -c "map(select((.parent!=null) and(.parent.id==$ID) ))|.[]" ); do
+    for CHILD_JSON in $( echo "$FILTERED_TASKS" | jq -c "map(select((.parent!=null) and(.parent.id==$ID) ))|.[]" ); do
       CHILD_ID=$(echo "$CHILD_JSON" | jq -c '[{id:.id}]')
       #echo "CHILD_ID: $CHILD_ID"
       print_children_by_their_parent_id "$CHILD_ID" "$PRINT_COMMAND" "$LEADING_SPACES$CHILD_LEADING_SPACES" 
