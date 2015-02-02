@@ -34,6 +34,12 @@ while true;do
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
       jq -c "[.[]| select((.status.id == $STATUS_NEW)or(.status.id==$STATUS_DOING)) ]" )
 
+    elif [ $(echo "$1" | grep "\<release:[0-9]*\>") ]; then
+      RELEASE_ID="$(echo "$1" | sed 's/^release://g')"
+      shift
+      NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
+      jq -c "[.[]| select((.release!=null) and (.release.release.id == $RELEASE_ID)) ]" )
+
     elif [ $(echo "$1" | grep "filter:[a-zA-Z0-9_-]\{1,\}") ]; then
       VARIABLE_NAME=$(echo "$1" | sed 's/^filter://g')
       shift
