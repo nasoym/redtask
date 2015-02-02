@@ -43,18 +43,17 @@ while true;do
     elif [ "$(echo "$1" | grep "\+[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
       TAG="$(echo "$1" | sed -e 's/^+//g')"
       shift
+      load_json_content_of_ids
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
-      jq -c "[.[]|\
-      select( (.cjson.tags!=null) and (.cjson.tags|contains([\"$TAG\"])) )\
-      ]" )
+      jq -c "map(select( (.cjson.tags!=null) and (.cjson.tags|contains([\"$TAG\"])) ))" )
 
+    #TODO: tag filtering does not really work since printing uses the all tasks list to show children of tasks
     elif [ "$(echo "$1" | grep "\-[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
       TAG="$(echo "$1" | sed -e 's/^-//g')"
       shift
+      load_json_content_of_ids
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
-      jq -c "[.[]|\
-      select( (.cjson.tags==null) or (.cjson.tags|contains([\"$TAG\"])|not) )\
-      ]" )
+      jq -c "map(select( (.cjson.tags==null) or (.cjson.tags|contains([\"$TAG\"])|not) ))" )
 
     elif [ "$1" = "unassign" ]; then
       shift
