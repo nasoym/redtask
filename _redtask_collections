@@ -62,6 +62,10 @@ while true;do
       IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
       ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
 
+    elif [ "$1" = "details" ]; then
+      shift
+      load_json_content_of_ids
+
     else
       break
     fi
