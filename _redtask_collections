@@ -1,8 +1,23 @@
 #!/bin/bash
 
+STATUS_TYPE="open"
+
 while true;do
   if [ "$#" -ge 1 ]; then
-    if [ $(echo "$1" | grep "^[0-9]*\(,[0-9]*\)*$") ]; then
+
+    if [ "$1" = "open" ]; then
+      shift
+      STATUS_TYPE="open"
+
+    elif [ "$1" = "closed" ]; then
+      shift
+      STATUS_TYPE="closed"
+
+    elif [ "$1" = "all" ]; then
+      shift
+      STATUS_TYPE="*"
+
+    elif [ $(echo "$1" | grep "^[0-9]*\(,[0-9]*\)*$") ]; then
       IDS=$(echo "$1" | tr ',' '\n')
       shift
 
@@ -19,11 +34,31 @@ while true;do
       IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
       ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
 
-    elif [ $(echo "$1" | grep "json:[a-zA-Z0-9_-]\{1,\}") ]; then
+    elif [ $(echo "$1" | grep "^json:[a-zA-Z0-9_-]\{1,\}$") ]; then
       VARIABLE_NAME=$(echo "$1" | sed 's/^json://g')
       shift
-      #TODO: how to append exisiting json
+      #TODO: how to append to exisiting json
       ALL_TASKS_JSON="$(eval $VARIABLE_NAME)"
+      IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
+      ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
+
+    elif [ $(echo "$1" | grep "^json:version:.*$") ]; then
+      VARIABLE_NAME=$(echo "$1" | sed 's/^json:version://g')
+      shift
+      if [ $( echo "$VARIABLE_NAME" | grep "^[0-9]*$") ];then
+        MATCHING_VERSION_ID="$VARIABLE_NAME"
+      else
+        MATCHING_VERSION_ID="$(version_by_name $VARIABLE_NAME)"
+      fi
+      if [ -z "$MATCHING_VERSION_ID" ];then
+        MATCHING_VERSION_ID="!*"
+      fi
+
+      #TODO: how to append to exisiting json
+      ALL_TASKS_JSON="$( json_lines_to_json_array \
+      "$(curl -s "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=$STATUS_TYPE&fixed_version_id=$MATCHING_VERSION_ID&sort=status:desc" |\
+      jq -c '.issues[]')" )"
+
       IDS="$( ids_from_json_array "$ALL_TASKS_JSON" )"
       ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
 
