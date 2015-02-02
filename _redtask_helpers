@@ -130,9 +130,17 @@ function version_by_name() {
   fi
 }
 
-#TODO:
-function load_json_content_for_ids() {
-  :
+function current_user_id() {
+  curl -s  "https://$SERVER/users/current.json?key=$KEY" |\
+  jq '.user.id'
+}
+
+function projects() {
+  curl -s  "https://$SERVER/projects.json?key=$KEY"
+}
+
+function project_details() {
+  curl -s  "https://$SERVER/projects/$PROJECT_ID.json?key=$KEY"
 }
 
 function parse_custom_json_field() {

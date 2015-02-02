@@ -12,73 +12,8 @@ function filter_01() {
   #jq -c "[.[]| select(.fixed_version.id != $(current_sprint_id) )]"
 }
 
-function current_sprint_id() {
-  if [ -z "$CURRENT_VERSION" ];then
-    curl -s  "https://$SERVER/projects/$PROJECT_ID/versions.json?key=$KEY" |\
-    jq '(.versions[] | select( .status == "open") | .id)' | tail -n 1
-  else
-    echo "$CURRENT_VERSION"
-  fi
-}
-
-function current_user_id() {
-  curl -s  "https://$SERVER/users/current.json?key=$KEY" |\
-  jq '.user.id'
-}
-
-function projects() {
-  curl -s  "https://$SERVER/projects.json?key=$KEY"
-}
-
-function project_details() {
-  curl -s  "https://$SERVER/projects/$PROJECT_ID.json?key=$KEY"
-}
-
-function current_ids() {
-  local SPRINT_ID=$(current_sprint_id)
-  #curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&tracker_id=2&status_id=open&fixed_version_id=$SPRINT_ID" |\
-  curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=$SPRINT_ID&tracker_id=2" |\
-  jq '.issues[] | .id'
-}
-
 function fixture() {
   cat $FIXTURE
-}
-
-function fixture_01() {
-  cat $SCRIPT_PATH/fixture_01.json | tr -d '\n'
-}
-
-function fixture_02() {
-  cat $SCRIPT_PATH/fixture_02.json | tr -d '\n'
-}
-
-function current_stories() {
-  local SPRINT_ID=$(current_sprint_id)
-  json_lines_to_json_array \
-  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=$SPRINT_ID&tracker_id=2" |\
-  jq -c '.issues[]')"
-}
-
-function current() {
-  local SPRINT_ID=$(current_sprint_id)
-  json_lines_to_json_array \
-  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=$SPRINT_ID&sort=status:desc" |\
-  jq -c '.issues[]')"
-}
-
-function current_done() {
-  local SPRINT_ID=$(current_sprint_id)
-  json_lines_to_json_array \
-  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&fixed_version_id=$SPRINT_ID&sort=status:desc" |\
-  jq -c '.issues[]')"
-}
-
-function current_all() {
-  local SPRINT_ID=$(current_sprint_id)
-  json_lines_to_json_array \
-  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=*&fixed_version_id=$SPRINT_ID&sort=status:desc" |\
-  jq -c '.issues[]')"
 }
 
 function done_today() {
@@ -95,18 +30,6 @@ function done_yesterday() {
   fi
   json_lines_to_json_array \
   "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&sort=status:desc&closed_on=$DATE_FILTER" |\
-  jq -c '.issues[]')"
-}
-
-function backlog_done() {
-  json_lines_to_json_array \
-  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&fixed_version_id=!*&sort=status:desc" |\
-  jq -c '.issues[]')"
-}
-
-function backlog() {
-  json_lines_to_json_array \
-  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=open&fixed_version_id=!*&sort=status:desc" |\
   jq -c '.issues[]')"
 }
 
