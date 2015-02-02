@@ -126,6 +126,11 @@ function print_children_by_their_parent_id(){
 
   if [ -z "$IDS" ]; then
       local IDS="$(echo "$FILTERED_TASKS" | jq -c 'map(select(.parent==null)|{id:.id})')"
+      #TODO: add the ids of those tasks whose parent is not in the list
+  fi
+  if [ "$IDS" = "[]" ]; then
+      #TODO: actually only use the ids of those tasks whose parent is not in the list
+      local IDS="$(echo "$FILTERED_TASKS" | jq -c 'map({id:.id})')"
   fi
 
   for ID in $(ids_from_json_array "$IDS"); do
@@ -169,7 +174,6 @@ while true;do
 
     elif [ "$1" = "lines" ]; then
       shift
-      #TODO: nothing is printed if no one has parents
       load_json_content_of_ids
       print_children_by_their_parent_id "" print_default
 
