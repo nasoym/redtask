@@ -59,7 +59,6 @@ if [ "$#" -ge 1 ]; then
 
   elif [ "$1" = "delete" ]; then
     shift
-    load_json_content_of_ids
     echo "delete ?:"
     for ID in $IDS; do
       JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
@@ -73,7 +72,6 @@ if [ "$#" -ge 1 ]; then
 
   elif [ "$1" = "estimate_to_remaining" ]; then
     shift
-    load_json_content_of_ids
     for ID in $IDS; do
       JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
       ESTIMATED_HOURS="$(echo "$JSON" | jq -r '.estimated_hours')"
@@ -83,7 +81,6 @@ if [ "$#" -ge 1 ]; then
 
   elif [ "$1" = "edit:subject" ]; then
     shift
-    load_json_content_of_ids
     for ID in $IDS; do
       JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
       OLD_SUBJECT="$(echo "$JSON" | jq -r '.subject')"
@@ -93,7 +90,6 @@ if [ "$#" -ge 1 ]; then
 
   elif [ "$1" = "edit:description" ]; then
     shift
-    load_json_content_of_ids
     for ID in $IDS; do
       JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
       OLD_DESCRIPTION="$(echo "$JSON" | jq -r '.description//""')"
@@ -273,7 +269,6 @@ if [ "$#" -ge 1 ]; then
     case "$MODIFIER" in
       "mo")
         #echo "$FINAL_MODIFICATION_STRING"
-        load_json_content_of_ids
         for ID in $IDS; do
           JSON=$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")
           LOCAL_FINAL_MODIFICATION_STRING="$FINAL_MODIFICATION_STRING"

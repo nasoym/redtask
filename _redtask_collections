@@ -20,12 +20,14 @@ while true;do
     elif [ $(echo "$1" | grep "^[0-9]*\(,[0-9]*\)*$") ]; then
       IDS=$(echo "$1" | tr ',' '\n')
       shift
+      load_json_content_of_ids
 
     elif [ $(echo "$1" | grep "ids:[a-zA-Z0-9_-]\{1,\}") ]; then
       VARIABLE_NAME=$(echo "$1" | sed 's/^ids://g')
       shift
       #TODO: how to append to existing id list
       IDS="$(eval $VARIABLE_NAME)"
+      load_json_content_of_ids
 
     elif [ $(echo "$1" | grep "json:stdin") ]; then
       shift

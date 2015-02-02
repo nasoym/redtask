@@ -160,7 +160,6 @@ while true;do
 
     if [ "$1" = "list" ]; then
       shift
-      load_json_content_of_ids
       print_list print_default
 
     elif [ $(echo "$1" | grep "list:[a-zA-Z0-9_-]*") ]; then
@@ -169,17 +168,14 @@ while true;do
       if [ -z "$PRINT_COMMAND" ]; then
         PRINT_COMMAND="print_details"
       fi
-      load_json_content_of_ids
       print_list "$PRINT_COMMAND"
 
     elif [ "$1" = "lines" ]; then
       shift
-      load_json_content_of_ids
       print_children_by_their_parent_id "" print_default
 
     elif [ "$1" = "lines:desc" ]; then
       shift
-      load_json_content_of_ids
       print_children_by_their_parent_id "" print_desc
 
     elif [ $(echo "$1" | grep "lines:[a-zA-Z0-9_-]*") ]; then
@@ -188,12 +184,10 @@ while true;do
       if [ -z "$PRINT_COMMAND" ]; then
         PRINT_COMMAND="print_details"
       fi
-      load_json_content_of_ids
       print_children_by_their_parent_id "" "$PRINT_COMMAND"
 
     elif [ "$1" = "report_estimates" ]; then
       shift
-      load_json_content_of_ids
       TOTAL_HOURS="0 "
       for TASK_JSON in $( echo "$FILTERED_TASKS" | jq -c '.[]' ); do
         HOURS=$(echo "$TASK_JSON" | jq '.estimated_hours//0')
@@ -204,7 +198,6 @@ while true;do
 
     elif [ $(echo "$1" | grep "^report$") ]; then
       shift
-      load_json_content_of_ids
       #TOTAL_ESTIMATED=$(echo "$FILTERED_TASKS" | jq '[.[] | .estimated_hours] | add')
       #TOTAL_ESTIMATED=$(echo "$FILTERED_TASKS" | jq -c '[.[] | .estimated_hours]')
       #echo "total estimated hours: $TOTAL_ESTIMATED"
@@ -252,7 +245,6 @@ while true;do
 
     elif [ $(echo "$1" | grep "^report:short$") ]; then
       shift
-      load_json_content_of_ids
       #TOTAL_ESTIMATED=$(echo "$FILTERED_TASKS" | jq '[.[] | .estimated_hours] | add')
       #TOTAL_ESTIMATED=$(echo "$FILTERED_TASKS" | jq -c '[.[] | .estimated_hours]')
       #echo "total estimated hours: $TOTAL_ESTIMATED"
@@ -300,12 +292,10 @@ while true;do
 
     elif [ "$1" = "pretty" ]; then
       shift
-      load_json_content_of_ids
       echo "$FILTERED_TASKS" | jq '.'
 
     elif [ "$1" = "json" ]; then
       shift
-      load_json_content_of_ids
       echo "$FILTERED_TASKS"
 
     elif [ "$1" = "ids" ]; then

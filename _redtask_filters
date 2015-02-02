@@ -37,13 +37,11 @@ while true;do
     elif [ $(echo "$1" | grep "filter:[a-zA-Z0-9_-]\{1,\}") ]; then
       VARIABLE_NAME=$(echo "$1" | sed 's/^filter://g')
       shift
-      load_json_content_of_ids
       NEW_FILTERED_TASKS="$(eval $VARIABLE_NAME)"
 
     elif [ "$(echo "$1" | grep "\+[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
       TAG="$(echo "$1" | sed -e 's/^+//g')"
       shift
-      load_json_content_of_ids
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
       jq -c "map(select( (.cjson.tags!=null) and (.cjson.tags|contains([\"$TAG\"])) ))" )
 
@@ -51,31 +49,26 @@ while true;do
     elif [ "$(echo "$1" | grep "\-[a-zA-Z_][a-zA-Z0-9_-]*")" ]; then
       TAG="$(echo "$1" | sed -e 's/^-//g')"
       shift
-      load_json_content_of_ids
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
       jq -c "map(select( (.cjson.tags==null) or (.cjson.tags|contains([\"$TAG\"])|not) ))" )
 
     elif [ "$1" = "unassign" ]; then
       shift
-      load_json_content_of_ids
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.assigned_to==null)]" )
 
     elif [ $(echo "$1" | grep "\<id:[0-9]*\>") ]; then
       ID=$(echo "$1" | sed 's/^id://g')
       shift
-      load_json_content_of_ids
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.id==$ID)]" )
 
     elif [ $(echo "$1" | grep "\<category:[0-9]*\>") ]; then
       CATEGORY_ID=$(echo "$1" | sed 's/^category://g')
       shift
-      load_json_content_of_ids
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.category.id==$CATEGORY_ID)]" )
 
     elif [ $(echo "$1" | grep "\<category:[a-zA-Z0-9_-]*\>") ]; then
       CATEGORY_STRING=$(echo "$1" | sed 's/^category://g')
       shift
-      load_json_content_of_ids
       MATCHING_CATEGORY_ID="$(category_by_name $CATEGORY_STRING)"
       if [ -n "$MATCHING_CATEGORY_ID" ];then
         NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.category.id==$MATCHING_CATEGORY_ID)]" )
@@ -84,14 +77,12 @@ while true;do
     elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
       USER_ID=$(echo "$1" | sed 's/^assign://g')
       shift
-      load_json_content_of_ids
       #TODO: how to provide a list of assignees
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.assigned_to.id==$USER_ID)]" )
 
     elif [ $(echo "$1" | grep "\<assign:[a-zA-Z0-9_-]*\>") ]; then
       USER_STRING=$(echo "$1" | sed 's/^assign://g')
       shift
-      load_json_content_of_ids
       #TODO: how to provide a list of assignees
       MATCHING_USER_ID="$(project_member_by_name $USER_STRING)"
       if [ -n "$MATCHING_USER_ID" ];then
