@@ -5,27 +5,24 @@ function print_desc() {
   local LEADING_SPACES="$2"
   print_default "$JSON" "$LEADING_SPACES" | tr -d '\n'
 
-  DESCRIPTION="$(echo "$JSON" | jq -r '.description//""')"
-  if [ -n "$DESCRIPTION" ];then
+  RELEASE_NAME="$(echo "$JSON" | jq -r '.release.release.name//""')"
+  if [ -n "$RELEASE_NAME" ];then
     echo
-    echo "$DESCRIPTION" \
-    | sed '/@[^:]*:/d' \
+    RELEASE_ID="$(echo "$JSON" | jq -r '.release.release.id//""')"
+    echo "$RELEASE_NAME [$RELEASE_ID]" \
     | sed -e "s/^/${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}/g" \
     | sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
   else
     echo
   fi
-}
 
-function print_details() {
-  local JSON="$1"
-  local LEADING_SPACES="$2"
-  print_default "$JSON" "$LEADING_SPACES" | tr -d '\n'
-
-  echo -n "$(echo "$JSON" | jq -r "\
-if (.release.release.name != null) then \"\n${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}\
-release: \(.release.release.name) (\(.release.release.id))\" else \"\" end" |\
-    sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g")"
+  DESCRIPTION="$(echo "$JSON" | jq -r '.description//""')"
+  if [ -n "$DESCRIPTION" ];then
+    echo "$DESCRIPTION" \
+    | sed '/@[^:]*:/d' \
+    | sed -e "s/^/${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}/g" \
+    | sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
+  fi
 
   NOTES="$(echo "$JSON" | jq -c "\
 if (.journals != null) then \
@@ -42,15 +39,6 @@ note: \(.a): \(.b)\" "\
     )"
   fi
 
-  DESCRIPTION="$(echo "$JSON" | jq -r '.description//""')"
-  if [ -n "$DESCRIPTION" ];then
-    echo
-    echo "$DESCRIPTION" \
-    | sed -e "s/^/${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}/g" \
-    | sed -e "s/^\(.\{$(tput cols)\}\).*$/\1/g"
-  else
-    echo
-  fi
 }
 
 function print_default() {
@@ -72,7 +60,6 @@ function print_default() {
  \(.status.name)\
 \(if ( (.cjson.tags != null) and ((.cjson.tags|length) > 0) ) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
 \(if (.category.name!=null) then \" (\(.category.name))\" else \"\" end)\
-\(if (.release.release.name != null) then \" \(.release.release.name)\" else \"\" end)\
 \(if (.assigned_to.name!=null) then \" \(.assigned_to.name):\" else \"\" end)\
  \\\"\(.subject)\\\"\
 \"" |\
@@ -108,7 +95,6 @@ function print_default() {
  \(.tracker.name)\
 \(if ( (.cjson.tags != null) and ((.cjson.tags|length) > 0) ) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
 \(if (.category.name!=null) then \" (\(.category.name))\" else \"\" end)\
-\(if (.release.release.name != null) then \" \(.release.release.name)\" else \"\" end)\
 \(if (.assigned_to.name!=null) then \" \(.assigned_to.name):\" else \"\" end)\
  \\\"\(.subject)\\\"\
 \"" |\
@@ -127,54 +113,34 @@ function print_children_by_their_parent_id(){
   local LEADING_SPACES="$3"
 
   if [ -z "$IDS" ]; then
-      local IDS="$(echo "$FILTERED_TASKS" | jq -c 'map(select(.parent==null)|{id:.id})')"
-      #TODO: add the ids of those tasks whose parent is not in the list
-  fi
-  if [ "$IDS" = "[]" ]; then
-      #TODO: actually only use the ids of those tasks whose parent is not in the list
-      local IDS="$(echo "$FILTERED_TASKS" | jq -c 'map({id:.id})')"
+      for ID in $(echo "$FILTERED_TASKS" | jq '.[]|.id');do
+          PARENT_ID=$(echo "$FILTERED_TASKS" | jq -r ".[]|select(.id==$ID)|.parent.id//\"\"")
+          if [ -n "$PARENT_ID" ]; then
+              PARENT=$(echo "$FILTERED_TASKS" | jq -r ".[]|select(.id==$PARENT_ID)|.id")
+              if [ -z "$PARENT" ];then
+                  IDS+="{\"id\":$ID}"
+              fi
+          else
+            IDS+="{\"id\":$ID}"
+          fi
+      done
+      IDS=$(echo "$IDS" | jq -s -c '.')
   fi
 
   for ID in $(ids_from_json_array "$IDS"); do
-    #echo ">$ID<"
-    #JSON="$(echo "$ALL_TASKS_JSON" | jq -r ".[]| select(.id==$ID)")"
     JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
     $PRINT_COMMAND "$JSON" "$LEADING_SPACES"
-    #for CHILD_JSON in $( echo "$ALL_TASKS_JSON" | jq -c "map(select((.parent!=null) and(.parent.id==$ID) ))|.[]" ); do
     for CHILD_JSON in $( echo "$FILTERED_TASKS" | jq -c "map(select((.parent!=null) and(.parent.id==$ID) ))|.[]" ); do
       CHILD_ID=$(echo "$CHILD_JSON" | jq -c '[{id:.id}]')
-      #echo "CHILD_ID: $CHILD_ID"
       print_children_by_their_parent_id "$CHILD_ID" "$PRINT_COMMAND" "$LEADING_SPACES$CHILD_LEADING_SPACES" 
     done
-  done
-}
-
-function print_list(){
-  local PRINT_COMMAND="$1"
-  local LEADING_SPACES="$2"
-
-  JSON="$(echo "$ALL_TASKS_JSON" | jq -c '.[]')"
-  for JSON in $( echo "$FILTERED_TASKS" | jq -c ".[]" ); do
-    $PRINT_COMMAND "$JSON" "$LEADING_SPACES"
   done
 }
 
 while true;do
   if [ "$#" -ge 1 ]; then
 
-    if [ "$1" = "list" ]; then
-      shift
-      print_list print_default
-
-    elif [ $(echo "$1" | grep "list:[a-zA-Z0-9_-]*") ]; then
-      PRINT_COMMAND=$(echo "$1" | sed 's/^list://g')
-      shift
-      if [ -z "$PRINT_COMMAND" ]; then
-        PRINT_COMMAND="print_details"
-      fi
-      print_list "$PRINT_COMMAND"
-
-    elif [ "$1" = "lines" ]; then
+    if [ "$1" = "lines" ]; then
       shift
       print_children_by_their_parent_id "" print_default
 
@@ -186,7 +152,7 @@ while true;do
       PRINT_COMMAND=$(echo "$1" | sed 's/^lines://g')
       shift
       if [ -z "$PRINT_COMMAND" ]; then
-        PRINT_COMMAND="print_details"
+        PRINT_COMMAND="print_desc"
       fi
       print_children_by_their_parent_id "" "$PRINT_COMMAND"
 
