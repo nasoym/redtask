@@ -3,9 +3,9 @@
 while true; do
   if [ "$#" -ge 1 ]; then
 
-    if [ $(echo "$1" | grep "^spent_time") ]; then
-      PARAM_1=$(echo "$1" | sed -e 's/^spent_time//g' -e 's/^\(:[^:]*\):*.*$/\1/g' -e 's/^://g')
-      PARAM_2=$(echo "$1" | sed -e 's/^spent_time//g' -e 's/^:[^:]*\(:*.*\)$/\1/g' -e 's/^://g')
+    if [ $(echo "$1" | grep "^timelog") ]; then
+      PARAM_1=$(echo "$1" | sed -e 's/^timelog//g' -e 's/^\(:[^:]*\):*.*$/\1/g' -e 's/^://g')
+      PARAM_2=$(echo "$1" | sed -e 's/^timelog//g' -e 's/^:[^:]*\(:*.*\)$/\1/g' -e 's/^://g')
       shift
       DAYS_TO_SHOW="3"
       COMMENT_FILTER=""
