@@ -120,8 +120,8 @@ if [ "$#" -ge 1 ]; then
           #TODO: delete old tracker id of MODIFICATION_VALUES
           MODIFICATION_VALUES+=("'tracker_id':2")
 
-        elif [ $(echo "$1" | grep "^total:[0-9]*$") ]; then
-          TOTAL_TIME=$(echo "$1" | sed 's/^total://g')
+        elif [ $(echo "$1" | grep "^total:[0-9]*\.\?[0-9]\+$") ]; then
+          TOTAL_TIME=$(echo "$1" | sed -e 's/^total://g')
           if [ -z "$TOTAL_TIME" ];then
             TOTAL_TIME="null"
           fi
@@ -134,13 +134,13 @@ if [ "$#" -ge 1 ]; then
           shift
           MODIFICATION_VALUES+=("'notes':'$NOTE_STRING'")
 
-        elif [ $(echo "$1" | grep "\<remaining:[0-9]*\>") ]; then
-          REMAINING_HOURS=$(echo "$1" | sed 's/^remaining://g')
+        elif [ $(echo "$1" | grep "\<remaining:[0-9]*\.\?[0-9]\+\>") ]; then
+          REMAINING_HOURS=$(echo "$1" | sed -e 's/^remaining://g')
           shift
           MODIFICATION_VALUES+=("'remaining_hours':$REMAINING_HOURS")
 
-        elif [ $(echo "$1" | grep "\<points:[0-9]*\>") ]; then
-          STORY_POINTS=$(echo "$1" | sed 's/^points://g')
+        elif [ $(echo "$1" | grep "\<points:[0-9]*\.\?[0-9]\+\>") ]; then
+          STORY_POINTS=$(echo "$1" | sed -e 's/^points://g')
           shift
           MODIFICATION_VALUES+=("'story_points':$STORY_POINTS")
 
