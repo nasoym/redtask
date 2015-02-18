@@ -41,6 +41,8 @@ note: \(.a): \(.b)\" "\
 
 }
 
+SHOW_ANY_CHILDREN=0
+
 function print_default() {
   local JSON="$1"
   local LEADING_SPACES="$2"
@@ -112,6 +114,12 @@ function print_children_by_their_parent_id(){
   local PRINT_COMMAND="$2"
   local LEADING_SPACES="$3"
 
+  if [ "$SHOW_ANY_CHILDREN" -eq 1 ]; then
+    local TASKS="$ALL_TASKS_JSON"
+  else
+    local TASKS="$FILTERED_TASKS"
+  fi
+
   if [ -z "$IDS" ]; then
       for ID in $(echo "$FILTERED_TASKS" | jq '.[]|.id');do
           PARENT_ID=$(echo "$FILTERED_TASKS" | jq -r ".[]|select(.id==$ID)|.parent.id//\"\"")
@@ -128,9 +136,9 @@ function print_children_by_their_parent_id(){
   fi
 
   for ID in $(ids_from_json_array "$IDS"); do
-    JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
+    JSON="$(echo "$TASKS" | jq -r ".[]| select(.id==$ID)")"
     $PRINT_COMMAND "$JSON" "$LEADING_SPACES"
-    for CHILD_JSON in $( echo "$FILTERED_TASKS" | jq -c "map(select((.parent!=null) and(.parent.id==$ID) ))|.[]" ); do
+    for CHILD_JSON in $( echo "$TASKS" | jq -c "map(select((.parent!=null) and(.parent.id==$ID) ))|.[]" ); do
       CHILD_ID=$(echo "$CHILD_JSON" | jq -c '[{id:.id}]')
       print_children_by_their_parent_id "$CHILD_ID" "$PRINT_COMMAND" "$LEADING_SPACES$CHILD_LEADING_SPACES" 
     done
@@ -140,7 +148,11 @@ function print_children_by_their_parent_id(){
 while true;do
   if [ "$#" -ge 1 ]; then
 
-    if [ "$1" = "lines" ]; then
+    if [ "$1" = "any" ]; then
+      shift
+      SHOW_ANY_CHILDREN=1
+
+    elif [ "$1" = "lines" ]; then
       shift
       print_children_by_their_parent_id "" print_default
 
