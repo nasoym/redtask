@@ -225,9 +225,9 @@ if [ "$#" -ge 1 ]; then
           shift
           MODIFICATION_VALUES+=("'subject':'$SUBJECT_STRING'")
 
-        elif [ "$(echo "$1" | grep "\<key:[a-z]*:.*")" ]; then
-          KEY_NAME="$(echo "$1" | sed -e 's/^key:\([a-z]*\):.*$/\1/g')"
-          VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^key:[a-z]*:\(.*\)$/\1/g')"
+        elif [ "$(echo "$1" | grep "\<key:[A-Za-z_.-]*:.*")" ]; then
+          KEY_NAME="$(echo "$1" | sed -e 's/^key:\([A-Za-z_.-]*\):.*$/\1/g')"
+          VALUE_ARGUMENT="$(echo "$1" | sed -e 's/^key:[A-Za-z_.-]*:\(.*\)$/\1/g')"
           shift
           #echo "KEY: $KEY_NAME"
           #echo "VALUE: $VALUE_ARGUMENT"
