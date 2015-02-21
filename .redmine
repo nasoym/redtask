@@ -16,6 +16,12 @@ function fixture() {
   cat $FIXTURE
 }
 
+function my() {
+  json_lines_to_json_array \
+  "$(curl -s  "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&status_id=closed&sort=status:desc&assigned_to_id=me" |\
+  jq -c '.issues[]')"
+}
+
 function done_today() {
   local DATE_FILTER=$(date +%F)
   json_lines_to_json_array \
