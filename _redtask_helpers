@@ -40,11 +40,15 @@ function load_json_of_ids() {
   echo "$ALL_TASKS_JSON"
 }
 
+function reload_json_content_of_ids() {
+  ALL_TASKS_JSON="$(load_json_of_ids "$IDS" 0)"
+  ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
+}
+
 function load_json_content_of_ids() {
   if [ -z "$ALL_TASKS_JSON" ] && [ -n "$IDS" ];then
     #echo " load json of ids" 1>&2
-    ALL_TASKS_JSON="$(load_json_of_ids "$IDS" 0)"
-    ALL_TASKS_JSON="$(parse_custom_json_field "$ALL_TASKS_JSON" "$IDS")"
+    reload_json_content_of_ids
   elif [ -z "$ALL_TASKS_JSON" ] && [ -z "$IDS" ];then
     #echo "no content" 1>&2
     ALL_TASKS_JSON="[]"

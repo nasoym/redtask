@@ -66,7 +66,7 @@ while true;do
 
     elif [ "$1" = "details" ]; then
       shift
-      load_json_content_of_ids
+      reload_json_content_of_ids
 
     else
       break
