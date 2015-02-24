@@ -59,6 +59,7 @@ function print_default() {
 \(.estimated_hours//\"-\")\
 ]\
 \(if (.cjson.est!= null) then \"\(.cjson.est)\" else \"\" end)\
+\(if (.spent_hours!= null) then \":[\(.spent_hours)]\" else \"\" end)\
  \(.status.name)\
 \(if ( (.cjson.tags != null) and ((.cjson.tags|length) > 0) ) then \" (\(.cjson.tags|join(\",\")))\" else \"\" end )\
 \(if (.category.name!=null) then \" (\(.category.name))\" else \"\" end)\
