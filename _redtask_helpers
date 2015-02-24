@@ -8,35 +8,35 @@ function issue() {
 }
 
 function load_json_of_ids() {
-  IDS=$1
-  DEPTH=$2
+  local IDS=$1
+  local DEPTH=$2
   if [ -n "$DEPTH" ];then
-    NEXT_DEPTH=$(( DEPTH - 1 ))
+    local NEXT_DEPTH=$(( DEPTH - 1 ))
   else
-    DEPTH=0
+    local DEPTH=0
   fi
-  ALL_TASKS_JSON="["
-  FIRST_ELEMENT=true
+  local ALL_TASKS_JSON="["
+  local FIRST_ELEMENT=true
   for ID in $IDS; do
-    TASK_JSON=$(issue $ID)
+    local TASK_JSON=$(issue $ID)
 
       if [ "$DEPTH" -gt 0 ];then
-        CHILD_IDS=$(echo "$TASK_JSON" | jq -r ".children[] | .id")
+        local CHILD_IDS=$(echo "$TASK_JSON" | jq -r ".children[] | .id")
         if [ -n "$CHILD_IDS" ];then
-          CHILD_TASKS_JSON="$(load_json_of_ids "$CHILD_IDS" $NEXT_DEPTH)"
-          CHILD_TASKS_JSON="$(parse_custom_json_field "$CHILD_TASKS_JSON" "$CHILD_IDS")"
-          TASK_JSON=$(echo "$TASK_JSON" | jq -c ".children=$CHILD_TASKS_JSON")
+          local CHILD_TASKS_JSON="$(load_json_of_ids "$CHILD_IDS" $NEXT_DEPTH)"
+          local CHILD_TASKS_JSON="$(parse_custom_json_field "$CHILD_TASKS_JSON" "$CHILD_IDS")"
+          local TASK_JSON=$(echo "$TASK_JSON" | jq -c ".children=$CHILD_TASKS_JSON")
         fi
       fi
 
     if [ "$FIRST_ELEMENT" = true ]; then
-      FIRST_ELEMENT=false
+      local FIRST_ELEMENT=false
     else
-      ALL_TASKS_JSON="${ALL_TASKS_JSON},"
+      local ALL_TASKS_JSON="${ALL_TASKS_JSON},"
     fi
-    ALL_TASKS_JSON="${ALL_TASKS_JSON}${TASK_JSON}"
+    local ALL_TASKS_JSON="${ALL_TASKS_JSON}${TASK_JSON}"
   done
-  ALL_TASKS_JSON="${ALL_TASKS_JSON}]"
+  local ALL_TASKS_JSON="${ALL_TASKS_JSON}]"
   echo "$ALL_TASKS_JSON"
 }
 
