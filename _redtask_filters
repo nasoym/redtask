@@ -95,6 +95,11 @@ while true;do
         NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.assigned_to.id==$MATCHING_USER_ID)]" )
       fi
 
+    elif [ "$1" = "details" ]; then
+      shift
+      NEW_FILTERED_TASKS="$(load_json_of_ids "$IDS" 0)"
+      NEW_FILTERED_TASKS="$(parse_custom_json_field "$NEW_FILTERED_TASKS" "$IDS")"
+
     else
       break
     fi
