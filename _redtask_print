@@ -1,5 +1,39 @@
 #!/bin/bash
 
+function print_est() {
+  local JSON="$1"
+  local LEADING_SPACES="$2"
+  print_default "$JSON" "$LEADING_SPACES" | tr -d '\n'
+  echo
+
+  BEST=$(echo "$JSON" | jq -r '.cjson.est[0]?//""')
+  LIKELY=$(echo "$JSON" | jq -r '.cjson.est[1]?//""')
+  WORST=$(echo "$JSON" | jq -r '.cjson.est[2]?//""')
+  ACTUAL=$(echo "$JSON" | jq -r '.spent_hours//""')
+
+  if [ -n "$BEST" ] && [ -n "$LIKELY" ] && [ -n "$WORST" ];then
+    echo -n "$LEADING_SPACES"
+
+    echo -n "$CHILD_LEADING_SPACES"
+
+    echo -n "[$BEST:$LIKELY:$WORST]"
+
+    PERT=$(wcalc -q -P1 "($BEST + ( 4 * $LIKELY) + (1 * $WORST)) / 6 ")
+    echo -n " pert:$PERT"
+    EXPECTED=$(wcalc -q -P1 "($BEST + ( 3 * $LIKELY) + (2 * $WORST)) / 6 ")
+    echo -n " exp:$EXPECTED"
+
+    if [ -n "$ACTUAL" ] && [ "$ACTUAL" != "0" ];then 
+#MRE = ( ActualResult - EstimatedResult) / ActualResult
+      MRE=$(wcalc -q -P1 "( $ACTUAL - $LIKELY) / $ACTUAL")
+      echo -n " mre:$MRE"
+    fi
+    echo
+  fi
+
+
+}
+
 function print_desc() {
   local JSON="$1"
   local LEADING_SPACES="$2"
