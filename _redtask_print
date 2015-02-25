@@ -25,8 +25,8 @@ function print_est() {
 
     if [ -n "$ACTUAL" ] && [ "$ACTUAL" != "0" ];then 
 #MRE = ( ActualResult - EstimatedResult) / ActualResult
-      MRE=$(wcalc -q -P1 "( $ACTUAL - $LIKELY) / $ACTUAL")
-      echo -n " mre:$MRE"
+      MRE=$(wcalc -q -P0 "100 * ( $ACTUAL - $LIKELY) / $ACTUAL")
+      echo -n " mre:$MRE%"
     fi
     echo
   fi
