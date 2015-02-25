@@ -64,8 +64,7 @@ if (.journals != null) then \
 else [] end \
 ")"
   if [ "$NOTES" != "[]" ];then
-    echo
-    echo -n "$( echo "$NOTES" |\
+    echo "$( echo "$NOTES" |\
     jq ".[] | \"${LEADING_SPACES}${CHILD_LEADING_SPACES}${CHILD_LEADING_SPACES}\
 note: \(.a): \(.b)\" "\
     |sed -e 's/^"//g' -e 's/"$//g'\
