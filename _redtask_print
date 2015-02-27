@@ -1,5 +1,121 @@
 #!/bin/bash
 
+WORST_CASE_SUM="0.0"
+BEST_CASE_SUM="0.0"
+TASK_VARIANCE_SUM="0.0"
+SPENT_SUM="0.0"
+
+EXPECTED_ESTIMATED_SUM="0.0"
+EXPECTED_PERT_SUM="0.0"
+EXPECTED_PERT2_SUM="0.0"
+
+: ${DEVIATION_DIVISOR:="2.6"}
+# 10% 0.25
+# 20% 0.51
+# 30% 0.77
+# 40% 1.00
+# 50% 1.40
+# 60% 1.70
+# 70% 2.10
+# 80% 2.60
+# 90% 3.30
+# 99% 6.00
+
+#   2%  : E - (2.00 * S)
+#  10%  : E - (1.28 * S)
+#  16%  : E - (1.00 * S)
+#  20%  : E - (0.84  * S)
+#  25%  : E - (0.67  * S)
+#  30%  : E - (0.52  * S)
+#  40%  : E - (0.25  * S)
+#  50%  : E
+#  60%  : E + (0.25  * S)
+#  70%  : E + (0.52  * S)
+
+: ${DEVIATION_DIVISOR:=6}
+# 10% 0.25
+# 20% 0.51
+# 30% 0.77
+# 40% 1.00
+# 50% 1.40
+# 60% 1.70
+# 70% 2.10
+# 80% 2.60
+# 90% 3.30
+# 99% 6.00
+
+#   2%  : E - (2.00 * S)
+#  10%  : E - (1.28 * S)
+#  16%  : E - (1.00 * S)
+#  20%  : E - (0.84  * S)
+#  25%  : E - (0.67  * S)
+#  30%  : E - (0.52  * S)
+#  40%  : E - (0.25  * S)
+#  50%  : E
+#  60%  : E + (0.25  * S)
+#  70%  : E + (0.52  * S)
+#  75%  : E + (0.67  * S)
+#  80%  : E + (0.84  * S)
+#  84%  : E + (1.00  * S)
+#  90%  : E + (1.28  * S)
+#  98%  : E + (2.00  * S)
+
+function showExpected() {
+    local EXPECTED=$1
+    local DEVIATION=$2
+    local FACTOR=$3
+    CALCULATED=$( wcalc -q -P0 "$EXPECTED + ($FACTOR * $DEVIATION)")
+    echo "${CALCULATED}h $(wcalc -q -P1 "$CALCULATED / 8")d"
+}
+
+function print_est_report() {
+
+  SIMPLE_STD_DEVIATION=$( wcalc -q "($WORST_CASE_SUM - $BEST_CASE_SUM) / $DEVIATION_DIVISOR" )
+  COMPLEX_STD_DEVIATION=$( wcalc -q "sqrt($TASK_VARIANCE_SUM)")
+
+#  echo "WORST_CASE_SUM: $WORST_CASE_SUM"
+#  echo "BEST_CASE_SUM: $BEST_CASE_SUM"
+#  echo "TASK_VARIANCE_SUM: $TASK_VARIANCE_SUM"
+
+  echo "-------------------------------------------"
+  echo "SIMPLE_STD_DEVIATION: $SIMPLE_STD_DEVIATION"
+  echo "COMPLEX_STD_DEVIATION: $COMPLEX_STD_DEVIATION"
+
+  echo "-------------------------------------------"
+  echo -n "${SPENT_SUM}h $(wcalc -q -P1 "$SPENT_SUM / 8")d"
+  echo " SPENT_SUM"
+
+  if [ "$EXPECTED_ESTIMATED_SUM" != "0.0" ] && [ "$EXPECTED_PERT_SUM" != "0.0" ] && [ "$EXPECTED_PERT2_SUM" != "0.0" ] ; then
+
+    echo "25%: ========================================="
+    FACTOR="-0.67"
+    echo -n "$(showExpected $EXPECTED_ESTIMATED_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
+    echo " EXPECTED_ESTIMATED_SUM"
+    echo -n "$(showExpected $EXPECTED_PERT_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
+    echo " EXPECTED_PERT_SUM"
+    echo -n "$(showExpected $EXPECTED_PERT2_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
+    echo " EXPECTED_PERT2_SUM"
+
+    echo "50%: ========================================="
+    FACTOR="0.0"
+    echo -n "$(showExpected $EXPECTED_ESTIMATED_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
+    echo " EXPECTED_ESTIMATED_SUM"
+    echo -n "$(showExpected $EXPECTED_PERT_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
+    echo " EXPECTED_PERT_SUM"
+    echo -n "$(showExpected $EXPECTED_PERT2_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
+    echo " EXPECTED_PERT2_SUM"
+
+    echo "75%: ========================================="
+    FACTOR="0.67"
+    echo -n "$(showExpected $EXPECTED_ESTIMATED_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
+    echo " EXPECTED_ESTIMATED_SUM"
+    echo -n "$(showExpected $EXPECTED_PERT_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
+    echo " EXPECTED_PERT_SUM"
+    echo -n "$(showExpected $EXPECTED_PERT2_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
+    echo " EXPECTED_PERT2_SUM"
+  fi
+}
+
 function print_est() {
   local JSON="$1"
   local LEADING_SPACES="$2"
@@ -23,14 +139,27 @@ function print_est() {
     EXPECTED=$(wcalc -q -P1 "($BEST + ( 3 * $LIKELY) + (2 * $WORST)) / 6 ")
     echo -n " exp:$EXPECTED"
 
+    EXPECTED_ESTIMATED_SUM=$( wcalc -q "$EXPECTED_ESTIMATED_SUM + $LIKELY" )
+    EXPECTED_PERT_SUM=$( wcalc -q "$EXPECTED_ESTIMATED_SUM + $PERT" )
+    EXPECTED_PERT2_SUM=$( wcalc -q "$EXPECTED_ESTIMATED_SUM + $EXPECTED" )
+
+    WORST_CASE_SUM=$( wcalc -q "$WORST_CASE_SUM + $WORST" )
+    BEST_CASE_SUM=$( wcalc -q "$BEST_CASE_SUM + $BEST" )
+    TASK_STD_DEVIATION=$( wcalc -q "($WORST - $BEST) / $DEVIATION_DIVISOR")
+    TASK_VARIANCE=$( wcalc -q "$TASK_STD_DEVIATION^2")
+    TASK_VARIANCE_SUM=$(wcalc -q "$TASK_VARIANCE_SUM + $TASK_VARIANCE")
+
     if [ -n "$ACTUAL" ] && [ "$ACTUAL" != "0" ];then 
 #MRE = ( ActualResult - EstimatedResult) / ActualResult
       MRE=$(wcalc -q -P0 "100 * ( $ACTUAL - $LIKELY) / $ACTUAL")
       echo -n " mre:$MRE%"
+
     fi
     echo
   fi
-
+  if [ -n "$ACTUAL" ] && [ "$ACTUAL" != "0" ];then 
+    SPENT_SUM=$( wcalc -q "$SPENT_SUM + $ACTUAL" )
+  fi
 
 }
 
