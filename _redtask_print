@@ -37,8 +37,8 @@ function showExpected() {
     local EXPECTED=$1
     local DEVIATION=$2
     local FACTOR=$3
-    CALCULATED=$( wcalc -q -P0 "$EXPECTED + ($FACTOR * $DEVIATION)")
-    echo "${CALCULATED}h $(wcalc -q -P1 "$CALCULATED / 8")d"
+    CALCULATED=$( wcalc -q -P0 "$EXPECTED + ($FACTOR * $DEVIATION)" | sed -e 's/^ *//g')
+    echo "${CALCULATED}h $(wcalc -q -P1 "$CALCULATED / 8" | sed -e 's/^ *//g')d"
 }
 
 function print_est_report() {
@@ -64,32 +64,44 @@ function print_est_report() {
 
   if [ "$EXPECTED_ESTIMATED_SUM" != "0.0" ] && [ "$EXPECTED_PERT_SUM" != "0.0" ] && [ "$EXPECTED_PERT2_SUM" != "0.0" ] ; then
 
-    echo "25%: ========================================="
-    FACTOR="-0.67"
-    echo -n "$(showExpected $EXPECTED_ESTIMATED_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
-    echo " EXPECTED_ESTIMATED_SUM"
-    echo -n "$(showExpected $EXPECTED_PERT_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
-    echo " EXPECTED_PERT_SUM"
-    echo -n "$(showExpected $EXPECTED_PERT2_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
-    echo " EXPECTED_PERT2_SUM"
+  FACTOR25="-0.67"
+  FACTOR50="0.0"
+  FACTOR75="0.67"
+  echo -n "Likely:"
+    echo -n " 25%:("
+    echo -n "$(showExpected $EXPECTED_ESTIMATED_SUM $COMPLEX_STD_DEVIATION $FACTOR25)"
+    echo -n ")"
+    echo -n " 50%:("
+    echo -n "$(showExpected $EXPECTED_ESTIMATED_SUM $COMPLEX_STD_DEVIATION $FACTOR50)"
+    echo -n ")"
+    echo -n " 75%:("
+    echo -n "$(showExpected $EXPECTED_ESTIMATED_SUM $COMPLEX_STD_DEVIATION $FACTOR75)"
+    echo -n ")"
+    echo
 
-    echo "50%: ========================================="
-    FACTOR="0.0"
-    echo -n "$(showExpected $EXPECTED_ESTIMATED_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
-    echo " EXPECTED_ESTIMATED_SUM"
-    echo -n "$(showExpected $EXPECTED_PERT_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
-    echo " EXPECTED_PERT_SUM"
-    echo -n "$(showExpected $EXPECTED_PERT2_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
-    echo " EXPECTED_PERT2_SUM"
+  echo -n "Pert:  "
+    echo -n " 25%:("
+    echo -n "$(showExpected $EXPECTED_PERT_SUM $COMPLEX_STD_DEVIATION $FACTOR25)"
+    echo -n ")"
+    echo -n " 50%:("
+    echo -n "$(showExpected $EXPECTED_PERT_SUM $COMPLEX_STD_DEVIATION $FACTOR50)"
+    echo -n ")"
+    echo -n " 75%:("
+    echo -n "$(showExpected $EXPECTED_PERT_SUM $COMPLEX_STD_DEVIATION $FACTOR75)"
+    echo -n ")"
+    echo
 
-    echo "75%: ========================================="
-    FACTOR="0.67"
-    echo -n "$(showExpected $EXPECTED_ESTIMATED_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
-    echo " EXPECTED_ESTIMATED_SUM"
-    echo -n "$(showExpected $EXPECTED_PERT_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
-    echo " EXPECTED_PERT_SUM"
-    echo -n "$(showExpected $EXPECTED_PERT2_SUM $COMPLEX_STD_DEVIATION $FACTOR)"
-    echo " EXPECTED_PERT2_SUM"
+  echo -n "Pert2: "
+    echo -n " 25%:("
+    echo -n "$(showExpected $EXPECTED_PERT2_SUM $COMPLEX_STD_DEVIATION $FACTOR25)"
+    echo -n ")"
+    echo -n " 50%:("
+    echo -n "$(showExpected $EXPECTED_PERT2_SUM $COMPLEX_STD_DEVIATION $FACTOR50)"
+    echo -n ")"
+    echo -n " 75%:("
+    echo -n "$(showExpected $EXPECTED_PERT2_SUM $COMPLEX_STD_DEVIATION $FACTOR75)"
+    echo -n ")"
+    echo
   fi
 }
 
@@ -111,24 +123,24 @@ function print_est() {
 
     echo -n "[$BEST:$LIKELY:$WORST]"
 
-    PERT=$(wcalc -q -P1 "($BEST + ( 4 * $LIKELY) + (1 * $WORST)) / 6 ")
+    PERT=$(wcalc -q -P1 "($BEST + ( 4 * $LIKELY) + (1 * $WORST)) / 6 "| sed -e 's/^ *//g')
     echo -n " pert:$PERT"
-    EXPECTED=$(wcalc -q -P1 "($BEST + ( 3 * $LIKELY) + (2 * $WORST)) / 6 ")
-    echo -n " exp:$EXPECTED"
+    PERT2=$(wcalc -q -P1 "($BEST + ( 3 * $LIKELY) + (2 * $WORST)) / 6 "| sed -e 's/^ *//g')
+    echo -n " pert2:$PERT2"
 
-    EXPECTED_ESTIMATED_SUM=$( wcalc -q "$EXPECTED_ESTIMATED_SUM + $LIKELY" )
-    EXPECTED_PERT_SUM=$( wcalc -q "$EXPECTED_ESTIMATED_SUM + $PERT" )
-    EXPECTED_PERT2_SUM=$( wcalc -q "$EXPECTED_ESTIMATED_SUM + $EXPECTED" )
+    EXPECTED_ESTIMATED_SUM=$( wcalc -q "$EXPECTED_ESTIMATED_SUM + $LIKELY" | sed -e 's/^ *//g')
+    EXPECTED_PERT_SUM=$( wcalc -q "$EXPECTED_ESTIMATED_SUM + $PERT" | sed -e 's/^ *//g')
+    EXPECTED_PERT2_SUM=$( wcalc -q "$EXPECTED_ESTIMATED_SUM + $PERT2" | sed -e 's/^ *//g')
 
-    WORST_CASE_SUM=$( wcalc -q "$WORST_CASE_SUM + $WORST" )
-    BEST_CASE_SUM=$( wcalc -q "$BEST_CASE_SUM + $BEST" )
-    TASK_STD_DEVIATION=$( wcalc -q "($WORST - $BEST) / $DEVIATION_DIVISOR")
-    TASK_VARIANCE=$( wcalc -q "$TASK_STD_DEVIATION^2")
-    TASK_VARIANCE_SUM=$(wcalc -q "$TASK_VARIANCE_SUM + $TASK_VARIANCE")
+    WORST_CASE_SUM=$( wcalc -q "$WORST_CASE_SUM + $WORST" | sed -e 's/^ *//g')
+    BEST_CASE_SUM=$( wcalc -q "$BEST_CASE_SUM + $BEST" | sed -e 's/^ *//g')
+    TASK_STD_DEVIATION=$( wcalc -q "($WORST - $BEST) / $DEVIATION_DIVISOR"| sed -e 's/^ *//g')
+    TASK_VARIANCE=$( wcalc -q "$TASK_STD_DEVIATION^2"| sed -e 's/^ *//g')
+    TASK_VARIANCE_SUM=$(wcalc -q "$TASK_VARIANCE_SUM + $TASK_VARIANCE"| sed -e 's/^ *//g')
 
     if [ -n "$ACTUAL" ] && [ "$ACTUAL" != "0" ];then 
 #MRE = ( ActualResult - EstimatedResult) / ActualResult
-      MRE=$(wcalc -q -P0 "100 * ( $ACTUAL - $LIKELY) / $ACTUAL")
+      MRE=$(wcalc -q -P0 "100 * ( $ACTUAL - $LIKELY) / $ACTUAL"| sed -e 's/^ *//g')
       echo -n " mre:$MRE%"
       SPENT_SUM=$( wcalc -q "$SPENT_SUM + $ACTUAL" | sed -e 's/^ *//g')
     fi
