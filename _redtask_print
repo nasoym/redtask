@@ -4,6 +4,7 @@ WORST_CASE_SUM="0.0"
 BEST_CASE_SUM="0.0"
 TASK_VARIANCE_SUM="0.0"
 SPENT_SUM="0.0"
+SPENT_UNTRACKED_SUM="0.0"
 
 EXPECTED_ESTIMATED_SUM="0.0"
 EXPECTED_PERT_SUM="0.0"
@@ -54,8 +55,12 @@ function print_est_report() {
   echo "COMPLEX_STD_DEVIATION: $COMPLEX_STD_DEVIATION"
 
   echo "-------------------------------------------"
-  echo -n "${SPENT_SUM}h $(wcalc -q -P1 "$SPENT_SUM / 8")d"
-  echo " SPENT_SUM"
+  echo -n "Spent:        "
+  echo "${SPENT_SUM}h $(wcalc -q -P1 "$SPENT_SUM / 8" | sed -e 's/^ *//g')d"
+  echo -n "Spent no est: "
+  echo "${SPENT_UNTRACKED_SUM}h $(wcalc -q -P1 "$SPENT_UNTRACKED_SUM / 8" | sed -e 's/^ *//g')d"
+  echo -n "Spent sum:    "
+  echo "$(wcalc -q -P1 "$SPENT_SUM + $SPENT_UNTRACKED_SUM" | sed -e 's/^ *//g')h $(wcalc -q -P1 "($SPENT_SUM + $SPENT_UNTRACKED_SUM )/ 8" | sed -e 's/^ *//g')d"
 
   if [ "$EXPECTED_ESTIMATED_SUM" != "0.0" ] && [ "$EXPECTED_PERT_SUM" != "0.0" ] && [ "$EXPECTED_PERT2_SUM" != "0.0" ] ; then
 
@@ -125,12 +130,13 @@ function print_est() {
 #MRE = ( ActualResult - EstimatedResult) / ActualResult
       MRE=$(wcalc -q -P0 "100 * ( $ACTUAL - $LIKELY) / $ACTUAL")
       echo -n " mre:$MRE%"
-
+      SPENT_SUM=$( wcalc -q "$SPENT_SUM + $ACTUAL" | sed -e 's/^ *//g')
     fi
     echo
-  fi
-  if [ -n "$ACTUAL" ] && [ "$ACTUAL" != "0" ];then 
-    SPENT_SUM=$( wcalc -q "$SPENT_SUM + $ACTUAL" )
+  else
+    if [ -n "$ACTUAL" ] && [ "$ACTUAL" != "0" ];then 
+      SPENT_UNTRACKED_SUM=$( wcalc -q "$SPENT_UNTRACKED_SUM + $ACTUAL" | sed -e 's/^ *//g')
+    fi
   fi
 
 }
