@@ -32,6 +32,11 @@ EXPECTED_PERT2_SUM="0.0"
 #  50%  : E
 #  60%  : E + (0.25  * S)
 #  70%  : E + (0.52  * S)
+#  75%  : E + (0.67  * S)
+#  80%  : E + (0.84  * S)
+#  84%  : E + (1.00  * S)
+#  90%  : E + (1.28  * S)
+#  98%  : E + (2.00  * S)
 
 function showExpected() {
     local EXPECTED=$1
