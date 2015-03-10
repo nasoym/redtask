@@ -58,10 +58,6 @@ while true;do
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
       jq -c "map(select( (.cjson.tags==null) or (.cjson.tags|contains([\"$TAG\"])|not) ))" )
 
-    elif [ "$1" = "unassign" ]; then
-      shift
-      NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.assigned_to==null)]" )
-
     elif [ $(echo "$1" | grep "\<id:[0-9]*\>") ]; then
       ID=$(echo "$1" | sed 's/^id://g')
       shift
@@ -80,9 +76,12 @@ while true;do
         NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.category.id==$MATCHING_CATEGORY_ID)]" )
       fi
 
-    elif [ $(echo "$1" | grep "\<assign:[0-9]*\>") ]; then
+    elif [ $(echo "$1" | grep "^assign:[0-9]*$") ]; then
       USER_ID=$(echo "$1" | sed 's/^assign://g')
       shift
+      if [ -z "$USER_ID" ];then
+        USER_ID="null"
+      fi
       #TODO: how to provide a list of assignees
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq -c "[.[]| select(.assigned_to.id==$USER_ID)]" )
 
