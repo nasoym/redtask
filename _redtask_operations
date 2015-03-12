@@ -282,6 +282,8 @@ if [ "$#" -ge 1 ]; then
                 # echo "KEY_NAME:$KEY_NAME" 1>&2
                 # echo "VALUE:$VALUE" 1>&2
                 # echo "old description :>$DESCRIPTION<" 1>&2
+                DESCRIPTION="$(echo "$DESCRIPTION" | perl -p -e 's/\r//g')"
+                DESCRIPTION="$(echo "$DESCRIPTION" | sed -e "s/'//g" -e 's/"/\\"/g')"
                 DESCRIPTION="$(echo "$DESCRIPTION" | sed "/^$KEY_NAME:/d")"
                 # echo "description :>$DESCRIPTION<" 1>&2
                 if [ -n "$DESCRIPTION" ] ;then
