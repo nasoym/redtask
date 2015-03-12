@@ -42,7 +42,7 @@ function showExpected() {
     local EXPECTED=$1
     local DEVIATION=$2
     local FACTOR=$3
-    CALCULATED=$( wcalc -q -P0 "$EXPECTED + ($FACTOR * $DEVIATION)" | sed -e 's/^ *//g')
+    CALCULATED=$( wcalc -q -P1 "$EXPECTED + ($FACTOR * $DEVIATION)" | sed -e 's/^ *//g')
     echo "${CALCULATED}h $(wcalc -q -P1 "$CALCULATED / 8" | sed -e 's/^ *//g')d"
 }
 
