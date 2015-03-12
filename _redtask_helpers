@@ -61,7 +61,7 @@ function write_issue() {
   local CURL_STRING="$(echo "$VALUES" | sed -e "s/^/{'issue':{/g" -e "s/$/}}/g" -e "s/'/\"/g")"
   echo "$CURL_STRING" |\
   curl -X PUT -H "Content-type:application/json" -s -d @- "https://${SERVER}/issues/${ISSUE_ID}.json?key=${KEY}"
-  #echo "$CURL_STRING"
+  # echo "$CURL_STRING" 1>&2
 }
 
 function trackers() {

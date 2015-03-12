@@ -95,6 +95,7 @@ if [ "$#" -ge 1 ]; then
       OLD_DESCRIPTION="$(echo "$JSON" | jq -r '.description//""')"
       NEW_DESCRIPTION="$(echo "$OLD_DESCRIPTION" | perl -p -e 's/\r//g'| EDITOR="vim -u NONE" vipe)"
       NEW_DESCRIPTION="$(echo "$NEW_DESCRIPTION" | sed -e "s/'//g" -e 's/"/\\"/g')"
+      # echo "new description: $NEW_DESCRIPTION" 1>&2
       write_issue $ID "'description':'$NEW_DESCRIPTION'"
     done
 
@@ -278,19 +279,20 @@ if [ "$#" -ge 1 ]; then
             for I in "${CUSTOM_VALUES[@]}"; do
                 KEY_NAME=$(echo "$I" | sed -e 's/^\(@[^:]*\):.*$/\1/g')
                 VALUE=$(echo "$I" | sed -e 's/^@[^:]*:\(.*\)$/\1/g')
-                #echo "KEY_NAME:$KEY_NAME" 1>&2
-                #echo "VALUE:$VALUE" 1>&2
+                # echo "KEY_NAME:$KEY_NAME" 1>&2
+                # echo "VALUE:$VALUE" 1>&2
+                # echo "old description :>$DESCRIPTION<" 1>&2
                 DESCRIPTION="$(echo "$DESCRIPTION" | sed "/^$KEY_NAME:/d")"
-                #echo "description :>$DESCRIPTION<" 1>&2
+                # echo "description :>$DESCRIPTION<" 1>&2
                 if [ -n "$DESCRIPTION" ] ;then
-                  #echo "description is not empty" 1>&2
+                  # echo "description is not empty" 1>&2
                   DESCRIPTION=$(echo "$DESCRIPTION\n")
                 fi
-                #echo "description :>$DESCRIPTION<" 1>&2
+                # echo "description :>$DESCRIPTION<" 1>&2
                 DESCRIPTION=$(echo -e "$DESCRIPTION$KEY_NAME:$VALUE")
-#                echo "---------------------"
-#                echo "DESCRIPTION: $DESCRIPTION"
-#                echo "---------------------"
+               # echo "---------------------"
+               # echo "DESCRIPTION: $DESCRIPTION"
+               # echo "---------------------"
             done
             DESCRIPTION="$(echo "$DESCRIPTION" | sed -e 's/"/\\"/g' -e "s/'//"g )"
             CUSTOM_MODIFIER="'description':'$DESCRIPTION'"
@@ -300,6 +302,7 @@ if [ "$#" -ge 1 ]; then
               LOCAL_FINAL_MODIFICATION_STRING+=",$CUSTOM_MODIFIER"
             fi
           fi
+          # echo "mod: $LOCAL_FINAL_MODIFICATION_STRING" 1>&2
           write_issue $ID "$LOCAL_FINAL_MODIFICATION_STRING"
         done
         ;;
