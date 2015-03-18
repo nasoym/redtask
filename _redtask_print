@@ -69,10 +69,12 @@ function print_est_report() {
 
   if [ "$EXPECTED_ESTIMATED_SUM" != "0.0" ] && [ "$EXPECTED_PERT_SUM" != "0.0" ] && [ "$EXPECTED_PERT2_SUM" != "0.0" ] ; then
 
-  FACTOR25="-0.67"
-  FACTOR50="0.0"
-  FACTOR75="0.67"
-  echo -n "Likely:"
+    FACTOR10="-1.28"
+    FACTOR25="-0.67"
+    FACTOR50="0.0"
+    FACTOR75="0.67"
+    FACTOR90="1.28"
+    echo -n "Likely:"
     echo -n " 25%:("
     echo -n "$(showExpected $EXPECTED_ESTIMATED_SUM $COMPLEX_STD_DEVIATION $FACTOR25)"
     echo -n ")"
@@ -84,7 +86,7 @@ function print_est_report() {
     echo -n ")"
     echo
 
-  echo -n "Pert:  "
+    echo -n "Pert:  "
     echo -n " 25%:("
     echo -n "$(showExpected $EXPECTED_PERT_SUM $COMPLEX_STD_DEVIATION $FACTOR25)"
     echo -n ")"
@@ -96,7 +98,7 @@ function print_est_report() {
     echo -n ")"
     echo
 
-  echo -n "Pert2: "
+    echo -n "Pert2: "
     echo -n " 25%:("
     echo -n "$(showExpected $EXPECTED_PERT2_SUM $COMPLEX_STD_DEVIATION $FACTOR25)"
     echo -n ")"
@@ -105,6 +107,18 @@ function print_est_report() {
     echo -n ")"
     echo -n " 75%:("
     echo -n "$(showExpected $EXPECTED_PERT2_SUM $COMPLEX_STD_DEVIATION $FACTOR75)"
+    echo -n ")"
+    echo
+
+    echo -n "Pert2: "
+    echo -n " 10%:("
+    echo -n "$(showExpected $EXPECTED_PERT2_SUM $COMPLEX_STD_DEVIATION $FACTOR10)"
+    echo -n ")"
+    echo -n " 50%:("
+    echo -n "$(showExpected $EXPECTED_PERT2_SUM $COMPLEX_STD_DEVIATION $FACTOR50)"
+    echo -n ")"
+    echo -n " 90%:("
+    echo -n "$(showExpected $EXPECTED_PERT2_SUM $COMPLEX_STD_DEVIATION $FACTOR90)"
     echo -n ")"
     echo
   fi
