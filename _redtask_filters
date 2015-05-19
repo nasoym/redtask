@@ -17,17 +17,17 @@ while true;do
     if [ "$1" = "feature" ]; then
       shift
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
-      jq -c "[.[]| select(.tracker.id == 2) ]" )
+      jq -c "[.[]| select(.tracker.id == ${TRACKER_FEATURE}) ]" )
 
     elif [ "$1" = "bug" ]; then
       shift
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
-      jq -c "[.[]| select(.tracker.id == 1) ]" )
+      jq -c "[.[]| select(.tracker.id == ${TRACKER_BUG}) ]" )
 
     elif [ "$1" = "task" ]; then
       shift
       NEW_FILTERED_TASKS=$(echo "$FILTERED_TASKS" |\
-      jq -c "[.[]| select(.tracker.id == 4) ]" )
+      jq -c "[.[]| select(.tracker.id == ${TRACKER_TASK}) ]" )
 
     elif [ "$1" = "open" ]; then
       shift

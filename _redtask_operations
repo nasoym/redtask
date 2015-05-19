@@ -109,17 +109,17 @@ if [ "$#" -ge 1 ]; then
         if [ "$1" = "bug" ]; then
           shift
           #TODO: delete old tracker id of MODIFICATION_VALUES
-          MODIFICATION_VALUES+=("'tracker_id':1")
+          MODIFICATION_VALUES+=("'tracker_id':${TRACKER_BUG}")
 
         elif [ "$1" = "task" ]; then
           shift
           #TODO: delete old tracker id of MODIFICATION_VALUES
-          MODIFICATION_VALUES+=("'tracker_id':4")
+          MODIFICATION_VALUES+=("'tracker_id':${TRACKER_TASK}")
 
         elif [ "$1" = "feature" ]; then
           shift
           #TODO: delete old tracker id of MODIFICATION_VALUES
-          MODIFICATION_VALUES+=("'tracker_id':2")
+          MODIFICATION_VALUES+=("'tracker_id':${TRACKER_FEATURE}")
 
         elif [ $(echo "$1" | grep "^total:[0-9]*\.\?[0-9]\+$") ]; then
           TOTAL_TIME=$(echo "$1" | sed -e 's/^total://g')
