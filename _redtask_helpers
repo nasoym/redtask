@@ -88,7 +88,7 @@ function issue_statuses() {
 }
 
 function project_members() {
-  curl -s "https://$SERVER/projects/$PROJECT_ID/memberships.json?key=$KEY" \
+  curl -s "https://$SERVER/projects/$PROJECT_ID/memberships.json?key=$KEY&limit=100" \
   | jq -c '.memberships' \
   | jq -r -c '[.[] | {id: .id, user: .user}]'
 }
