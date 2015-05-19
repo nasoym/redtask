@@ -3,13 +3,9 @@
 if [ "$#" -ge 1 ]; then
 
   if [ "$1" = "test_01" ]; then
-    RESULT="$(project_member_by_name $2)"
-    shift 2
-    if [ -n "$RESULT" ];then
-      echo "found user: $RESULT"
-    else
-      echo "no or too many users found"
-    fi
+    # RESULT="$(curl -s "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&project_id=$PROJECT_ID&sort=status:desc" )"
+    RESULT="$(curl -s "https://$SERVER/issues.json?key=$KEY&limit=$ISSUE_LIMIT&sort=status:desc" )"
+    echo "$RESULT"
 
   elif [ "$1" = "test_02" ]; then
     #RESULT="$(category_by_name $2)"
