@@ -94,7 +94,7 @@ if [ "$#" -ge 1 ]; then
       JSON="$(echo "$FILTERED_TASKS" | jq -r ".[]| select(.id==$ID)")"
       OLD_DESCRIPTION="$(echo "$JSON" | jq -r '.description//""')"
       NEW_DESCRIPTION="$(echo "$OLD_DESCRIPTION" | perl -p -e 's/\r//g'| EDITOR="vim -u NONE" vipe)"
-      NEW_DESCRIPTION="$(echo "$NEW_DESCRIPTION" | sed -e "s/'//g" -e 's/"/\\"/g')"
+      NEW_DESCRIPTION="$(echo "$NEW_DESCRIPTION" | sed -e "s/'//g" -e 's/"/\\"/g' -e "s/$(printf '\t')/    /g" )"
       # echo "new description: $NEW_DESCRIPTION" 1>&2
       write_issue $ID "'description':'$NEW_DESCRIPTION'"
     done
